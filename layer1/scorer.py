@@ -1,0 +1,62 @@
+"""Layer 1: runs all registered rules over a document and produces a result."""
+
+from dataclasses import dataclass, field
+
+from .rules import REGISTRY, Flag
+
+EM_DASH_RATE_THRESHOLD_PER_1000W = 3.0
+
+
+@dataclass
+class AnalysisResult:
+    text: str
+    word_count: int
+    flags: list[Flag] = field(default_factory=list)
+    em_dash_rate_per_1000w: float = 0.0
+
+    @property
+    def flag_count(self) -> int:
+        return len(self.flags)
+
+    @property
+    def density_per_1000w(self) -> float:
+        if self.word_count == 0:
+            return 0.0
+        return round(self.flag_count / self.word_count * 1000, 1)
+
+    def flags_by_rule(self) -> dict[str, list[Flag]]:
+        grouped: dict[str, list[Flag]] = {}
+        for flag in self.flags:
+            grouped.setdefault(flag.rule_id, []).append(flag)
+        return grouped
+
+
+class PatternScorer:
+    """Runs every rule in REGISTRY against a document."""
+
+    def __init__(self, rules=None):
+        self.rules = rules if rules is not None else REGISTRY
+
+    def analyze(self, text: str) -> AnalysisResult:
+        word_count = len(text.split())
+        flags: list[Flag] = []
+        for rule in self.rules:
+            flags.extend(rule.apply(text))
+
+        em_dash_count = text.count("\u2014")
+        em_dash_rate = round(em_dash_count / word_count * 1000, 1) if word_count else 0.0
+        if em_dash_rate > EM_DASH_RATE_THRESHOLD_PER_1000W:
+            flags.append(
+                Flag(
+                    "em_dash_density",
+                    "Elevated em dash rate",
+                    f"{em_dash_rate}/1000w",
+                    0,
+                    0,
+                    f"Document-level: {em_dash_rate} em dashes per 1000 words, "
+                    f"above the {EM_DASH_RATE_THRESHOLD_PER_1000W} threshold",
+                )
+            )
+
+        flags.sort(key=lambda f: f.start)
+        return AnalysisResult(text=text, word_count=word_count, flags=flags, em_dash_rate_per_1000w=em_dash_rate)
