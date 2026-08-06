@@ -32,6 +32,13 @@ class Rule:
     explanation: str
     # A finder takes the full text and yields (start, end, matched_text)
     finder: Callable[[str], list[tuple[int, int, str]]]
+    # Most rules should run against the quote-normalized text (see
+    # scorer.py) so an apostrophe check works regardless of curly vs
+    # straight quotes. A rule that specifically detects curly quotes
+    # needs to see the text BEFORE normalization erases them -- that's
+    # what this flag is for. Safe because normalize_quotes is a 1-to-1
+    # character swap, so offsets stay valid either way.
+    use_original: bool = False
 
     def apply(self, text: str) -> list[Flag]:
         return [
@@ -116,6 +123,39 @@ def _find_hedge_stacking(text: str) -> list[tuple[int, int, str]]:
     return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
 
 
+def _find_promotional_language(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        r"\b(groundbreaking|revolutionary|game[- ]changing|seamless(ly)?|"
+        r"cutting[- ]edge|unparalleled|unprecedented|transformative|"
+        r"world[- ]class|state[- ]of[- ]the[- ]art|best[- ]in[- ]class)\b",
+        re.I,
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
+def _find_ai_vocabulary(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        r"\b(delve(s|d)?\s+into|tapestry|testament\s+to|underscor(es|ing|ed)|"
+        r"leverage(s|d)?|robust|vibrant\s+landscape|multifaceted|"
+        r"ever[- ]evolving|realm\s+of|boasts?)\b",
+        re.I,
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
+def _find_false_ranges(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        r"\bfrom\s+[\w\s]{1,30}?\s+to\s+[\w\s]{1,30}?,\s*from\s+[\w\s]{1,30}?\s+to\s+[\w\s]{1,30}?\b",
+        re.I,
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
+def _find_curly_quotes(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(r"[\u2018\u2019\u201c\u201d]")
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
 REGISTRY: list[Rule] = [
     Rule("chatbot_artifact", "Chatbot artifact",
          "Assistant-style sign-off or offer to continue, not how a person talks mid-thought",
@@ -138,4 +178,16 @@ REGISTRY: list[Rule] = [
     Rule("hedge_stacking", "Excessive hedging",
          "Stacked qualifiers weakening a claim that could be stated plainly",
          _find_hedge_stacking),
+    Rule("promotional_language", "Promotional language",
+         "Advertisement-style superlative, rare in ordinary prose",
+         _find_promotional_language),
+    Rule("ai_vocabulary", "Overused AI vocabulary",
+         "Word or phrase disproportionately common in LLM output vs human writing",
+         _find_ai_vocabulary),
+    Rule("false_ranges", "False range",
+         "Two parallel 'from X to Y' ranges stacked for false comprehensiveness",
+         _find_false_ranges),
+    Rule("curly_quotes", "Curly quotation marks",
+         "Typographic quotes/apostrophes, common in AI output and word processors",
+         _find_curly_quotes, use_original=True),
 ]

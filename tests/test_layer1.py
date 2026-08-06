@@ -78,7 +78,39 @@ def test_filler_phrase_detected():
 def test_hedge_stacking_detected():
     result = PatternScorer().analyze("It could potentially be argued that this matters.")
     assert any(f.rule_id == "hedge_stacking" for f in result.flags)
+def test_promotional_language_detected():
+    result = PatternScorer().analyze("This is a groundbreaking, revolutionary approach.")
+    assert any(f.rule_id == "promotional_language" for f in result.flags)
 
+
+def test_ai_vocabulary_detected():
+    result = PatternScorer().analyze("Let's delve into this robust, multifaceted topic.")
+    assert any(f.rule_id == "ai_vocabulary" for f in result.flags)
+
+
+def test_false_ranges_detected():
+    result = PatternScorer().analyze(
+        "This affects industries from healthcare to finance, from small startups to global enterprises."
+    )
+    assert any(f.rule_id == "false_ranges" for f in result.flags)
+
+
+def test_curly_quotes_detected():
+    result = PatternScorer().analyze("This isn\u2019t a straight quote, it\u2019s curly.")
+    curly_flags = [f for f in result.flags if f.rule_id == "curly_quotes"]
+    assert len(curly_flags) == 2
+
+
+def test_curly_quotes_absent_on_straight_quotes():
+    result = PatternScorer().analyze("This isn't a curly quote, it's straight.")
+    assert not any(f.rule_id == "curly_quotes" for f in result.flags)
+
+
+def test_curly_quotes_does_not_break_other_rules():
+    result = PatternScorer().analyze("It\u2019s not a happy laugh. It\u2019s more of a sad one.")
+    fired = {f.rule_id for f in result.flags}
+    assert "negative_parallelism" in fired
+    assert "curly_quotes" in fired
 
 def test_em_dash_density_flagged():
     text = "One \u2014 two \u2014 three \u2014 four \u2014 five \u2014 six words here total count."

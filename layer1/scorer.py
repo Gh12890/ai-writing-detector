@@ -53,11 +53,15 @@ class PatternScorer:
         self.rules = rules if rules is not None else REGISTRY
 
     def analyze(self, text: str) -> AnalysisResult:
-       	text = normalize_quotes(text)
-        word_count = len(text.split())
+        original = text
+        normalized = normalize_quotes(text)
+        word_count = len(normalized.split())
         flags: list[Flag] = []
         for rule in self.rules:
-            flags.extend(rule.apply(text))
+            source = original if rule.use_original else normalized
+            flags.extend(rule.apply(source))
+
+        em_dash_count = normalized.count("\u2014")
 
         em_dash_count = text.count("\u2014")
         em_dash_rate = round(em_dash_count / word_count * 1000, 1) if word_count else 0.0
@@ -75,4 +79,4 @@ class PatternScorer:
             )
 
         flags.sort(key=lambda f: f.start)
-        return AnalysisResult(text=text, word_count=word_count, flags=flags, em_dash_rate_per_1000w=em_dash_rate)
+        return AnalysisResult(text=normalized, word_count=word_count, flags=flags, em_dash_rate_per_1000w=em_dash_rate)
