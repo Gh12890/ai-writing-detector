@@ -108,7 +108,33 @@ def test_human_control_low_false_positives():
     stay well below the Mummy passage's density."""
     result = PatternScorer().analyze(HUMAN_CONTROL_TEXT)
     assert result.flag_count <= 1, f"Too many false positives on human control: {result.flags}"
+REAL_PASTED_TEXT_WITH_MARKDOWN_AND_SMART_QUOTES = """Because in that final moment **Imhotep understands something brutal about his whole story**.
+At the end of *The Mummy Returns*, Rick is hanging over the pit and **Evelyn risks her life to pull him up**. Imhotep is in the same position and calls to **Anck-su-namun** to save him \u2014 but **she runs instead**. Then he looks at Rick and Evie, and he sees the contrast immediately:
+* **Rick and Evie\u2019s love is real and mutual** \u2014 each is willing to die for the other.
+* **Imhotep\u2019s love is not what he thought it was** \u2014 he would have saved Anck-su-namun, but she would not save him.
+So that little laugh / smile before he lets go is usually read as a mix of:
+1. **Recognition of betrayal**
+   He realizes Anck-su-namun never loved him the way he loved her.
+2. **Bitter irony**
+   The man he hates, Rick, actually has the thing Imhotep thought he had: genuine love.
+3. **Acceptance of defeat**
+   Once Anck-su-namun abandons him, Imhotep loses the main reason he came back. He stops fighting and just lets go.
+So the short answer is:
+**He laughs because he suddenly sees the truth \u2014 Rick and Evie\u2019s love is real, his own isn\u2019t, and the whole thing has become tragically ironic.** It\u2019s not a happy laugh. It\u2019s more of a **broken, bitter realization** right before he gives up.
+If you want, I can also give you a **scene-by-scene psychological breakdown of Imhotep in *The Mummy* and *The Mummy Returns***, because his ending is actually more tragic than it looks."""
 
+
+def test_real_pasted_text_regression():
+    """This is the exact text a real paste broke Layer 1 with: curly
+    apostrophes killed negative_parallelism, and markdown ** wrapping the
+    numbered-list titles killed rule_of_three_outline. Both are fixed;
+    this locks the fix in against the exact input that exposed the bugs."""
+    result = PatternScorer().analyze(REAL_PASTED_TEXT_WITH_MARKDOWN_AND_SMART_QUOTES)
+    fired_rules = {f.rule_id for f in result.flags}
+    assert "negative_parallelism" in fired_rules, "Smart-quote regression: negative_parallelism should still fire"
+    assert "rule_of_three_outline" in fired_rules, "Markdown regression: rule_of_three_outline should still fire"
+    rule_of_three_count = sum(1 for f in result.flags if f.rule_id == "rule_of_three_outline")
+    assert rule_of_three_count == 3, f"Expected all 3 numbered items to fire, got {rule_of_three_count}"
 
 def test_legal_boilerplate_not_over_flagged():
     """Formulaic legal citation language should not trip the same rules as
