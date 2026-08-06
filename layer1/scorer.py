@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from .rules import REGISTRY, Flag
 
 EM_DASH_RATE_THRESHOLD_PER_1000W = 3.0
+BOLDFACE_RATE_THRESHOLD_PER_1000W = 5.0
 
 # Smart-quote variants mapped to their straight-quote equivalents. Every
 # rule regex is written against straight quotes; without this, curly
@@ -62,8 +63,6 @@ class PatternScorer:
             flags.extend(rule.apply(source))
 
         em_dash_count = normalized.count("\u2014")
-
-        em_dash_count = text.count("\u2014")
         em_dash_rate = round(em_dash_count / word_count * 1000, 1) if word_count else 0.0
         if em_dash_rate > EM_DASH_RATE_THRESHOLD_PER_1000W:
             flags.append(
@@ -75,6 +74,21 @@ class PatternScorer:
                     0,
                     f"Document-level: {em_dash_rate} em dashes per 1000 words, "
                     f"above the {EM_DASH_RATE_THRESHOLD_PER_1000W} threshold",
+                )
+            )
+
+        bold_pair_count = normalized.count("**") // 2
+        bold_rate = round(bold_pair_count / word_count * 1000, 1) if word_count else 0.0
+        if bold_rate > BOLDFACE_RATE_THRESHOLD_PER_1000W:
+            flags.append(
+                Flag(
+                    "boldface_overuse",
+                    "Elevated boldface rate",
+                    f"{bold_rate}/1000w",
+                    0,
+                    0,
+                    f"Document-level: {bold_rate} bolded phrases per 1000 words, "
+                    f"above the {BOLDFACE_RATE_THRESHOLD_PER_1000W} threshold",
                 )
             )
 

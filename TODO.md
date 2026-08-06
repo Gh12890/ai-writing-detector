@@ -4,7 +4,7 @@
 
 \## Status
 
-14 of the SKILL.md's 24 official patterns are implemented and tested.
+18 of the SKILL.md's 24 official patterns are implemented and tested.
 
 2 additional rules (meta\_summary\_framing, parallel\_bullet\_em\_dash) are
 
@@ -18,7 +18,11 @@ imply more taxonomy coverage than actually exists.
 
 
 
-\## Implemented (14/24, verified against SKILL.md)
+\## Implemented (18/24, verified against SKILL.md)
+
+\- \[x] #1  Undue Emphasis on Significance, Legacy, Broader Trends -> significance\_inflation
+
+\- \[x] #3  Superficial Analyses with -ing Endings -> superficial\_ing\_analysis
 
 \- \[x] #4  Promotional and Advertisement-like Language -> promotional\_language
 
@@ -36,6 +40,8 @@ imply more taxonomy coverage than actually exists.
 
 \- \[x] #13 Em Dash Overuse                -> em\_dash\_density
 
+\- \[x] #14 Overuse of Boldface            -> boldface\_overuse
+
 \- \[x] #17 Emojis                         -> emoji
 
 \- \[x] #18 Curly Quotation Marks          -> curly\_quotes
@@ -50,15 +56,13 @@ imply more taxonomy coverage than actually exists.
 
 \- \[x] #23 Excessive Hedging              -> hedge\_stacking
 
+\- \[x] #24 Generic Positive Conclusions   -> generic\_positive\_conclusion
 
 
-\## Not yet built (10/24)
 
-\- \[ ] #1  Undue Emphasis on Significance, Legacy, and Broader Trends
+\## Not yet built (6/24)
 
 \- \[ ] #2  Undue Emphasis on Notability and Media Coverage
-
-\- \[ ] #3  Superficial Analyses with -ing Endings
 
 \- \[ ] #6  Outline-like "Challenges and Future Prospects" Sections
 
@@ -66,13 +70,9 @@ imply more taxonomy coverage than actually exists.
 
 \- \[ ] #11 Elegant Variation (Synonym Cycling)
 
-\- \[ ] #14 Overuse of Boldface
-
 \- \[ ] #15 Inline-Header Vertical Lists
 
 \- \[ ] #16 Title Case in Headings
-
-\- \[ ] #24 Generic Positive Conclusions
 
 
 

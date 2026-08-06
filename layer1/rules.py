@@ -2,12 +2,7 @@
 Layer 1: deterministic pattern rules.
 
 Each Rule is independent and independently testable. Add new rules by
-appending to REGISTRY -- nothing else needs to change. This starts with
-8 rules covering the categories we've already validated against real
-text in conversation (chatbot artifacts, meta-summary framing, negative
-parallelism, parallel bullets, rule-of-three outlines, em-dash density,
-filler phrases, hedge stacking). The remaining patterns from the
-SKILL.md's 24 can be added the same way later.
+appending to REGISTRY -- nothing else needs to change.
 """
 
 import re
@@ -30,14 +25,7 @@ class Rule:
     rule_id: str
     name: str
     explanation: str
-    # A finder takes the full text and yields (start, end, matched_text)
     finder: Callable[[str], list[tuple[int, int, str]]]
-    # Most rules should run against the quote-normalized text (see
-    # scorer.py) so an apostrophe check works regardless of curly vs
-    # straight quotes. A rule that specifically detects curly quotes
-    # needs to see the text BEFORE normalization erases them -- that's
-    # what this flag is for. Safe because normalize_quotes is a 1-to-1
-    # character swap, so offsets stay valid either way.
     use_original: bool = False
 
     def apply(self, text: str) -> list[Flag]:
@@ -45,15 +33,6 @@ class Rule:
             Flag(self.rule_id, self.name, matched, start, end, self.explanation)
             for start, end, matched in self.finder(text)
         ]
-
-
-def _regex_finder(pattern: str, flags: int = re.I) -> Callable[[str], list[tuple[int, int, str]]]:
-    compiled = re.compile(pattern, flags)
-
-    def find(text: str) -> list[tuple[int, int, str]]:
-        return [(m.start(), m.end(), m.group(0)) for m in compiled.finditer(text)]
-
-    return find
 
 
 def _find_chatbot_artifact(text: str) -> list[tuple[int, int, str]]:
@@ -75,11 +54,6 @@ def _find_meta_summary(text: str) -> list[tuple[int, int, str]]:
 
 
 def _find_negative_parallelism(text: str) -> list[tuple[int, int, str]]:
-    # Three shapes, all seen in real text during this conversation:
-    #   "X isn't Y. It's Z."                (Mummy passage, sentence 1)
-    #   "It's not X. It's Y."               (Mummy passage, sentence 2 -- comma
-    #                                         and period separators both occur)
-    #   "It's not just X, it's Y."          (classic negative-parallelism form)
     pattern = re.compile(
         r"[^.]*\bisn'?t\b[^.]*\.\s*It'?s\b[^.]*\."
         r"|\bIt'?s not\b[^.]*[,.]\s*It'?s\b[^.]*\.",
@@ -97,12 +71,9 @@ def _find_parallel_bullets(text: str) -> list[tuple[int, int, str]]:
 
 
 def _find_rule_of_three_outline(text: str) -> list[tuple[int, int, str]]:
-    # Numbered item: "1. Some Title Phrase" (1-5 words), followed by a
-    # newline. Fixed from the earlier bug: the original only matched
-    # exactly 2-word titles and silently missed 3-word ones like
-    # "Recognition of betrayal".
     item_pattern = re.compile(
-        r"^\d+\.\s+\*{0,2}([A-Z][a-zA-Z]+(?:\s+[a-zA-Z]+){0,4})\*{0,2}\s*$", re.M)
+        r"^\d+\.\s+\*{0,2}([A-Z][a-zA-Z]+(?:\s+[a-zA-Z]+){0,4})\*{0,2}\s*$", re.M
+    )
     matches = list(item_pattern.finditer(text))
     if len(matches) < 3:
         return []
@@ -193,6 +164,38 @@ def _find_knowledge_cutoff_disclaimer(text: str) -> list[tuple[int, int, str]]:
     return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
 
 
+def _find_significance_inflation(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        r"\b(stands as a testament to|solidif(y|ies|ied) (its|his|her|their) (place|legacy)|"
+        r"cements? (its|his|her|their) legacy|will (long )?be remembered as|"
+        r"marked a (significant|pivotal|watershed) moment|"
+        r"played a (pivotal|crucial|significant) role in shaping)\b",
+        re.I,
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
+def _find_superficial_ing_analysis(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        r",\s+(underscoring|highlighting|reflecting|emphasizing|showcasing|"
+        r"illustrating|demonstrating|signaling|cementing|solidifying|"
+        r"reinforcing|revealing|further (solidifying|cementing))\b",
+        re.I,
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
+def _find_generic_positive_conclusion(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        r"\b(moving forward|in today'?s fast-paced world|"
+        r"as we (move|look) (into|toward) the future|"
+        r"overall,? this (represents|marks)|this marks an exciting( new)? chapter|"
+        r"the future (looks|remains) bright)\b",
+        re.I,
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
 REGISTRY: list[Rule] = [
     Rule("chatbot_artifact", "Chatbot artifact",
          "Assistant-style sign-off or offer to continue, not how a person talks mid-thought",
@@ -239,4 +242,13 @@ REGISTRY: list[Rule] = [
     Rule("knowledge_cutoff_disclaimer", "Knowledge-cutoff disclaimer",
          "Assistant-style disclaimer about training data or real-time access",
          _find_knowledge_cutoff_disclaimer),
+    Rule("significance_inflation", "Significance inflation",
+         "Grand, unsupported claim about legacy or historical importance",
+         _find_significance_inflation),
+    Rule("superficial_ing_analysis", "Superficial -ing analysis",
+         "Comma-plus-participle tacked onto a sentence, adding interpretation without new information",
+         _find_superficial_ing_analysis),
+    Rule("generic_positive_conclusion", "Generic positive conclusion",
+         "Stock upbeat closing phrase, rare in writing with a specific point to make",
+         _find_generic_positive_conclusion),
 ]

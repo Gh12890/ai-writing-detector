@@ -134,6 +134,30 @@ def test_sycophantic_tone_detected():
 def test_knowledge_cutoff_disclaimer_detected():
     result = PatternScorer().analyze("As of my last update, I don't have access to real-time data.")
     assert any(f.rule_id == "knowledge_cutoff_disclaimer" for f in result.flags)
+def test_significance_inflation_detected():
+    result = PatternScorer().analyze("This event stands as a testament to human perseverance.")
+    assert any(f.rule_id == "significance_inflation" for f in result.flags)
+
+
+def test_superficial_ing_analysis_detected():
+    result = PatternScorer().analyze("The results improved sharply, underscoring the strategy's success.")
+    assert any(f.rule_id == "superficial_ing_analysis" for f in result.flags)
+
+
+def test_generic_positive_conclusion_detected():
+    result = PatternScorer().analyze("Moving forward, this marks an exciting new chapter for the team.")
+    assert any(f.rule_id == "generic_positive_conclusion" for f in result.flags)
+
+
+def test_boldface_overuse_flagged():
+    text = "This is **bold** and **bold** and **bold** and **bold** and **bold** again in ten words total here now."
+    result = PatternScorer().analyze(text)
+    assert any(f.rule_id == "boldface_overuse" for f in result.flags)
+
+
+def test_no_boldface_no_false_positive():
+    result = PatternScorer().analyze("This is a plain sentence with no bold formatting anywhere in it at all.")
+    assert not any(f.rule_id == "boldface_overuse" for f in result.flags)
 
 def test_em_dash_density_flagged():
     text = "One \u2014 two \u2014 three \u2014 four \u2014 five \u2014 six words here total count."
