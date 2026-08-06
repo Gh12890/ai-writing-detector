@@ -94,7 +94,8 @@ def _find_rule_of_three_outline(text: str) -> list[tuple[int, int, str]]:
     # newline. Fixed from the earlier bug: the original only matched
     # exactly 2-word titles and silently missed 3-word ones like
     # "Recognition of betrayal".
-    item_pattern = re.compile(r"^\d+\.\s+([A-Z][a-zA-Z]+(?:\s+[a-zA-Z]+){0,4})\s*$", re.M)
+    item_pattern = re.compile(
+        r"^\d+\.\s+\*{0,2}([A-Z][a-zA-Z]+(?:\s+[a-zA-Z]+){0,4})\*{0,2}\s*$", re.M)
     matches = list(item_pattern.finditer(text))
     if len(matches) < 3:
         return []

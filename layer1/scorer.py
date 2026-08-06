@@ -6,6 +6,21 @@ from .rules import REGISTRY, Flag
 
 EM_DASH_RATE_THRESHOLD_PER_1000W = 3.0
 
+# Smart-quote variants mapped to their straight-quote equivalents. Every
+# rule regex is written against straight quotes; without this, curly
+# quotes from Word, browsers, or messaging apps silently break any
+# pattern that checks for an apostrophe. Each mapping is one character to
+# one character, so span offsets computed after this runs stay valid
+# against the normalized text.
+_QUOTE_MAP = str.maketrans({
+    "\u2018": "'", "\u2019": "'",
+    "\u201c": '"', "\u201d": '"',
+})
+
+
+def normalize_quotes(text: str) -> str:
+    return text.translate(_QUOTE_MAP)
+
 
 @dataclass
 class AnalysisResult:
@@ -38,6 +53,7 @@ class PatternScorer:
         self.rules = rules if rules is not None else REGISTRY
 
     def analyze(self, text: str) -> AnalysisResult:
+       	text = normalize_quotes(text)
         word_count = len(text.split())
         flags: list[Flag] = []
         for rule in self.rules:
