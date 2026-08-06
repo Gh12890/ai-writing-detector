@@ -4,7 +4,7 @@
 
 \## Status
 
-10 of the SKILL.md's 24 official patterns are implemented and tested.
+14 of the SKILL.md's 24 official patterns are implemented and tested.
 
 2 additional rules (meta\_summary\_framing, parallel\_bullet\_em\_dash) are
 
@@ -18,9 +18,11 @@ imply more taxonomy coverage than actually exists.
 
 
 
-\## Implemented (10/24, verified against SKILL.md)
+\## Implemented (14/24, verified against SKILL.md)
 
 \- \[x] #4  Promotional and Advertisement-like Language -> promotional\_language
+
+\- \[x] #5  Vague Attributions and Weasel Words -> vague\_attribution
 
 \- \[x] #7  Overused "AI Vocabulary" Words  -> ai\_vocabulary
 
@@ -34,9 +36,15 @@ imply more taxonomy coverage than actually exists.
 
 \- \[x] #13 Em Dash Overuse                -> em\_dash\_density
 
+\- \[x] #17 Emojis                         -> emoji
+
 \- \[x] #18 Curly Quotation Marks          -> curly\_quotes
 
 \- \[x] #19 Collaborative Communication Artifacts -> chatbot\_artifact
+
+\- \[x] #20 Knowledge-Cutoff Disclaimers   -> knowledge\_cutoff\_disclaimer
+
+\- \[x] #21 Sycophantic/Servile Tone       -> sycophantic\_tone
 
 \- \[x] #22 Filler Phrases                 -> filler\_phrase
 
@@ -44,15 +52,13 @@ imply more taxonomy coverage than actually exists.
 
 
 
-\## Not yet built (14/24)
+\## Not yet built (10/24)
 
 \- \[ ] #1  Undue Emphasis on Significance, Legacy, and Broader Trends
 
 \- \[ ] #2  Undue Emphasis on Notability and Media Coverage
 
 \- \[ ] #3  Superficial Analyses with -ing Endings
-
-\- \[ ] #5  Vague Attributions and Weasel Words
 
 \- \[ ] #6  Outline-like "Challenges and Future Prospects" Sections
 
@@ -65,12 +71,6 @@ imply more taxonomy coverage than actually exists.
 \- \[ ] #15 Inline-Header Vertical Lists
 
 \- \[ ] #16 Title Case in Headings
-
-\- \[ ] #17 Emojis
-
-\- \[ ] #20 Knowledge-Cutoff Disclaimers
-
-\- \[ ] #21 Sycophantic/Servile Tone
 
 \- \[ ] #24 Generic Positive Conclusions
 

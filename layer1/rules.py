@@ -156,6 +156,43 @@ def _find_curly_quotes(text: str) -> list[tuple[int, int, str]]:
     return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
 
 
+def _find_emojis(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        "[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F1E6-\U0001F1FF]"
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
+def _find_vague_attribution(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        r"\b(industry (observers|experts|analysts)|some (argue|say|believe)|"
+        r"many (believe|argue|say)|experts (say|believe|argue)|"
+        r"critics (argue|say)|observers (note|say))\b",
+        re.I,
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
+def _find_sycophantic_tone(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        r"\b(great question|excellent question|i'?d be happy to|"
+        r"certainly!|absolutely!|what a (great|wonderful) (question|idea))\b",
+        re.I,
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
+def _find_knowledge_cutoff_disclaimer(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        r"\b(as of my (last update|knowledge cutoff|training)|"
+        r"i don'?t have access to real-time|"
+        r"my (knowledge|training) (cutoff|is limited to)|"
+        r"i'?m not able to browse the (internet|web))\b",
+        re.I,
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
 REGISTRY: list[Rule] = [
     Rule("chatbot_artifact", "Chatbot artifact",
          "Assistant-style sign-off or offer to continue, not how a person talks mid-thought",
@@ -190,4 +227,16 @@ REGISTRY: list[Rule] = [
     Rule("curly_quotes", "Curly quotation marks",
          "Typographic quotes/apostrophes, common in AI output and word processors",
          _find_curly_quotes, use_original=True),
+    Rule("emoji", "Emoji",
+         "Emoji character, rare in formal prose and disproportionately common in chatbot output",
+         _find_emojis, use_original=True),
+    Rule("vague_attribution", "Vague attribution",
+         "Cites an unnamed source ('some argue', 'industry observers') instead of a real one",
+         _find_vague_attribution),
+    Rule("sycophantic_tone", "Sycophantic tone",
+         "Assistant-style flattery or eagerness-to-please phrasing",
+         _find_sycophantic_tone),
+    Rule("knowledge_cutoff_disclaimer", "Knowledge-cutoff disclaimer",
+         "Assistant-style disclaimer about training data or real-time access",
+         _find_knowledge_cutoff_disclaimer),
 ]

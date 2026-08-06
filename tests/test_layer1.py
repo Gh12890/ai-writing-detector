@@ -111,6 +111,29 @@ def test_curly_quotes_does_not_break_other_rules():
     fired = {f.rule_id for f in result.flags}
     assert "negative_parallelism" in fired
     assert "curly_quotes" in fired
+def test_emoji_detected():
+    result = PatternScorer().analyze("This is great! \U0001F600 Really happy about it.")
+    assert any(f.rule_id == "emoji" for f in result.flags)
+
+
+def test_no_emoji_no_false_positive():
+    result = PatternScorer().analyze("This is a plain sentence with no emoji at all.")
+    assert not any(f.rule_id == "emoji" for f in result.flags)
+
+
+def test_vague_attribution_detected():
+    result = PatternScorer().analyze("Industry observers say this trend will continue.")
+    assert any(f.rule_id == "vague_attribution" for f in result.flags)
+
+
+def test_sycophantic_tone_detected():
+    result = PatternScorer().analyze("Great question! I'd be happy to help with that.")
+    assert any(f.rule_id == "sycophantic_tone" for f in result.flags)
+
+
+def test_knowledge_cutoff_disclaimer_detected():
+    result = PatternScorer().analyze("As of my last update, I don't have access to real-time data.")
+    assert any(f.rule_id == "knowledge_cutoff_disclaimer" for f in result.flags)
 
 def test_em_dash_density_flagged():
     text = "One \u2014 two \u2014 three \u2014 four \u2014 five \u2014 six words here total count."
