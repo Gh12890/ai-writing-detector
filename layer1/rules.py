@@ -195,7 +195,34 @@ def _find_generic_positive_conclusion(text: str) -> list[tuple[int, int, str]]:
     )
     return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
 
+def _find_notability_emphasis(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        r"\b(has been (featured|covered) (in|by)|"
+        r"garnered (significant|widespread) attention|"
+        r"received widespread (coverage|recognition)|"
+        r"has been the subject of numerous|widely covered by)\b",
+        re.I,
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
 
+
+def _find_outline_challenges_section(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        r"^#{0,3}\s*(challenges and (future )?(prospects|outlook)|"
+        r"looking ahead|future outlook|road ahead)\s*$",
+        re.I | re.M,
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
+def _find_copula_avoidance(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(r"\b(serves as (a|an)|functions as (a|an)|acts as (a|an))\b", re.I)
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
+def _find_inline_header_list(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(r"^\s*[\*\-]\s+\*{2}[^*\n]+:\*{2}", re.M)
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
 REGISTRY: list[Rule] = [
     Rule("chatbot_artifact", "Chatbot artifact",
          "Assistant-style sign-off or offer to continue, not how a person talks mid-thought",
@@ -251,4 +278,16 @@ REGISTRY: list[Rule] = [
     Rule("generic_positive_conclusion", "Generic positive conclusion",
          "Stock upbeat closing phrase, rare in writing with a specific point to make",
          _find_generic_positive_conclusion),
+    Rule("notability_emphasis", "Notability/media emphasis",
+         "Unsupported claim about media coverage or public attention",
+         _find_notability_emphasis),
+    Rule("outline_challenges_section", "Outline-style section heading",
+         "Stock 'Challenges and Future Prospects'-style heading, common in AI-generated overviews",
+         _find_outline_challenges_section),
+    Rule("copula_avoidance", "Copula avoidance",
+         "'Serves as/functions as/acts as a' used in place of the plainer 'is a'",
+         _find_copula_avoidance),
+    Rule("inline_header_list", "Inline-header vertical list",
+         "Bullet opening with a bolded label and colon, common in AI-generated lists",
+         _find_inline_header_list),
 ]

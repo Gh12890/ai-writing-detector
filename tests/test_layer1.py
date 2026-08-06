@@ -158,6 +158,29 @@ def test_boldface_overuse_flagged():
 def test_no_boldface_no_false_positive():
     result = PatternScorer().analyze("This is a plain sentence with no bold formatting anywhere in it at all.")
     assert not any(f.rule_id == "boldface_overuse" for f in result.flags)
+def test_notability_emphasis_detected():
+    result = PatternScorer().analyze("The startup has been featured in major publications worldwide.")
+    assert any(f.rule_id == "notability_emphasis" for f in result.flags)
+
+
+def test_outline_challenges_section_detected():
+    result = PatternScorer().analyze("Some intro text.\n\nChallenges and Future Prospects\n\nMore text here.")
+    assert any(f.rule_id == "outline_challenges_section" for f in result.flags)
+
+
+def test_outline_challenges_section_not_triggered_by_mention():
+    result = PatternScorer().analyze("There are many challenges and future prospects worth discussing in detail here.")
+    assert not any(f.rule_id == "outline_challenges_section" for f in result.flags)
+
+
+def test_copula_avoidance_detected():
+    result = PatternScorer().analyze("This tool serves as a bridge between two systems.")
+    assert any(f.rule_id == "copula_avoidance" for f in result.flags)
+
+
+def test_inline_header_list_detected():
+    result = PatternScorer().analyze("* **Speed:** the system responds quickly.\n* **Cost:** it is affordable.")
+    assert any(f.rule_id == "inline_header_list" for f in result.flags)
 
 def test_em_dash_density_flagged():
     text = "One \u2014 two \u2014 three \u2014 four \u2014 five \u2014 six words here total count."

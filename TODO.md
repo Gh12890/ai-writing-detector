@@ -4,7 +4,7 @@
 
 \## Status
 
-18 of the SKILL.md's 24 official patterns are implemented and tested.
+22 of the SKILL.md's 24 official patterns are implemented and tested.
 
 2 additional rules (meta\_summary\_framing, parallel\_bullet\_em\_dash) are
 
@@ -18,9 +18,11 @@ imply more taxonomy coverage than actually exists.
 
 
 
-\## Implemented (18/24, verified against SKILL.md)
+\## Implemented (22/24, verified against SKILL.md)
 
 \- \[x] #1  Undue Emphasis on Significance, Legacy, Broader Trends -> significance\_inflation
+
+\- \[x] #2  Undue Emphasis on Notability and Media Coverage -> notability\_emphasis
 
 \- \[x] #3  Superficial Analyses with -ing Endings -> superficial\_ing\_analysis
 
@@ -28,7 +30,11 @@ imply more taxonomy coverage than actually exists.
 
 \- \[x] #5  Vague Attributions and Weasel Words -> vague\_attribution
 
+\- \[x] #6  Outline-like "Challenges and Future Prospects" Sections -> outline\_challenges\_section
+
 \- \[x] #7  Overused "AI Vocabulary" Words  -> ai\_vocabulary
+
+\- \[x] #8  Avoidance of is/are (Copula Avoidance) -> copula\_avoidance
 
 \- \[x] #9  Negative Parallelisms          -> negative\_parallelism
 
@@ -41,6 +47,8 @@ imply more taxonomy coverage than actually exists.
 \- \[x] #13 Em Dash Overuse                -> em\_dash\_density
 
 \- \[x] #14 Overuse of Boldface            -> boldface\_overuse
+
+\- \[x] #15 Inline-Header Vertical Lists   -> inline\_header\_list
 
 \- \[x] #17 Emojis                         -> emoji
 
@@ -60,19 +68,21 @@ imply more taxonomy coverage than actually exists.
 
 
 
-\## Not yet built (6/24)
+\## Not yet built (2/24) -- deliberately, not just unstarted
 
-\- \[ ] #2  Undue Emphasis on Notability and Media Coverage
+\- \[ ] #11 Elegant Variation (Synonym Cycling) -- needs coreference /
 
-\- \[ ] #6  Outline-like "Challenges and Future Prospects" Sections
+&#x20;     tracking the same referent across a document, not a regex problem.
 
-\- \[ ] #8  Avoidance of is/are (Copula Avoidance)
+&#x20;     Would need real NLP (spaCy entity linking at minimum) to do honestly.
 
-\- \[ ] #11 Elegant Variation (Synonym Cycling)
+\- \[ ] #16 Title Case in Headings -- heuristic-fragile. A cheap
 
-\- \[ ] #15 Inline-Header Vertical Lists
+&#x20;     capitalization-ratio check risks flagging legitimate headings and
 
-\- \[ ] #16 Title Case in Headings
+&#x20;     proper-noun-heavy sentences as false positives. Needs a better
+
+&#x20;     approach than "count capital letters" before it's worth shipping.
 
 
 
