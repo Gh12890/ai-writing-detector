@@ -144,31 +144,45 @@ Known v1 limitations, not yet fixed:
 
 
 
-\## False-positive rate measurement -- tool built, real data collection in progress
+\## ## False-positive rate measurement -- tool built, real comparison done, still small-n
 
-scripts/measure\_fpr.py is built and tested (3 tests, tests/test\_measure\_fpr.py):
+scripts/measure\_fpr.py and scripts/compare\_corpora.py are built and
 
-point it at a folder of .txt files and it reports flags/1000w, % of
+tested (5 tests total). Point measure\_fpr.py at a folder of .txt files
 
-documents with any false positive, and a per-rule breakdown, computed
+for a single-corpus report; compare\_corpora.py takes two folders and
 
-transparently instead of asserted.
-
-
-
-Real corpus-building started: 2 genuine human-written documents measured
-
-so far (one M.A. History paper, one longer academic piece). Already
-
-produced one real, actionable finding -- see curly\_quotes removal above,
-
-found directly from this measurement, not from guessing. Corpus needs to
-
-grow to 15-20+ documents before the aggregate false-positive rate means
-
-anything statistically.
+reports both side by side plus a per-rule human-vs-AI breakdown.
 
 
+
+Real results exist now -- see FINDINGS.md for the full writeup. Summary:
+
+6 human documents (16,533 words) vs. 7 AI documents (7,328 words,
+
+across ChatGPT/Gemini/Claude) measured. AI text scored 2.85x higher
+
+overall. Structural rules (rule\_of\_three\_outline, em\_dash\_density) show
+
+clean, reproducible discrimination -- zero human false positives across
+
+all 3 models. Vocabulary rules (ai\_vocabulary, promotional\_language) are
+
+weaker and human-leaning. Already produced one real, actionable finding
+
+along the way -- curly\_quotes removal above, found directly from this
+
+measurement, not from guessing.
+
+
+
+Still needs: 50+ documents per side for anything resembling a real
+
+benchmark (see FINDINGS.md "Limitations" for the full list of what's
+
+still missing -- controlled prompts, varied human registers, blind
+
+review). Current numbers are directional, not final.
 
 \## Also not built, separate from the above
 
