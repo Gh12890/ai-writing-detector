@@ -238,6 +238,36 @@ def test_real_pasted_text_regression():
     rule_of_three_count = sum(1 for f in result.flags if f.rule_id == "rule_of_three_outline")
     assert rule_of_three_count == 3, f"Expected all 3 numbered items to fire, got {rule_of_three_count}"
 
+def test_mask_excluded_blanks_out_span():
+    from layer1.scorer import _mask_excluded
+    masked = _mask_excluded("abcdefghij", [(2, 5)])
+    assert masked == "ab   fghij"
+    assert len(masked) == 10
+
+
+def test_mask_excluded_no_spans_returns_unchanged():
+    from layer1.scorer import _mask_excluded
+    assert _mask_excluded("hello world", []) == "hello world"
+
+
+def test_em_dash_inside_citation_does_not_trigger_document_flag():
+    text = (
+        "Section 5 of the Model Act \u2014 Amendment \u2014 Title \u2014 Provisions Act, 2020 "
+        "governs this narrow procedural matter for the parties involved today."
+    )
+    result = PatternScorer().analyze(text)
+    assert not any(f.rule_id == "em_dash_density" for f in result.flags)
+    assert result.em_dash_rate_per_1000w == 0.0
+
+
+def test_em_dash_outside_citation_still_triggers_document_flag():
+    text = (
+        "This is a short sentence \u2014 with an em dash \u2014 and another "
+        "\u2014 right here \u2014 too, plainly."
+    )
+    result = PatternScorer().analyze(text)
+    assert any(f.rule_id == "em_dash_density" for f in result.flags)
+
 def test_legal_boilerplate_not_over_flagged():
     """Formulaic legal citation language should not trip the same rules as
     chatbot-style AI writing. This isn't the exclusion filter from the

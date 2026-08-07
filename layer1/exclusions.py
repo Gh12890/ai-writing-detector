@@ -13,9 +13,8 @@ scorer can exclude them before counting flags.
 import re
 
 _STATUTE_CITATION = re.compile(
-    r"\bSection\s+\d+[A-Za-z]?(\(\d+\))?\s+of\s+the\s+[A-Z][\w\s]+?\s+Act,?\s+\d{4}\b"
+    r"\bSection\s+\d+[A-Za-z]?(\(\d+\))?\s+of\s+the\s+[A-Z][\w\s\u2014-]+?\s+Act,?\s+\d{4}\b"
 )
-
 _CASE_CITATION = re.compile(
     r"\bAIR\s+\d{4}\s+[A-Z]{2,4}\s+\d+\b"
     r"|\(\d{4}\)\s+\d+\s+SCC\s+\d+\b"

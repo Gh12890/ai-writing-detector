@@ -126,23 +126,41 @@ Verified with a deliberately constructed overlap test, not just a
 
 
 
-Known v1 limitations, not yet fixed:
+Known v1 limitations:
 
 \- No fuzzy matching against a real standard-clause library (the original
 
 &#x20; design called for this; v1 only does exact citation/phrase patterns)
-
-\- Document-level flags (em\_dash\_density, boldface\_overuse) are NOT
-
-&#x20; exclusion-aware -- a document that's mostly citations could still trip
-
-&#x20; a rate-based flag even if every individual span inside it is excluded
 
 \- Citation regexes are Indian-law-specific (Section/Act/AIR/SCC format)
 
 &#x20; and won't recognize other jurisdictions' citation conventions
 
 
+
+FIXED: document-level flags (em\_dash\_density, boldface\_overuse) are now
+
+exclusion-aware. Excluded-span characters get masked out before either
+
+rate is computed, so a document that's mostly legal citations can't trip
+
+a document-level flag purely from characters sitting inside boilerplate
+
+that's already excluded at the span level. Verified with real numbers,
+
+not just asserted: a test case with em dashes deliberately placed inside
+
+a citation span went from a 125.0/1000w raw rate (would massively
+
+exceed the 3.0 threshold) to 0.0 after masking, while a contrast case
+
+with em dashes outside any citation still triggers normally. This also
+
+required widening the statute-citation regex to allow em dashes/hyphens
+
+in act titles, since long act titles legitimately sometimes have a
+
+dash-separated subtitle -- a real improvement, not just a test fixture.
 
 \## ## False-positive rate measurement -- tool built, real comparison done, still small-n
 
