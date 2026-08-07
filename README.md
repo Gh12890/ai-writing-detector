@@ -1,62 +1,79 @@
-# Layer 1 — pattern scorer
+# Draft Audit
 
-Deterministic, regex-based detection of AI-writing tells. No model calls,
-no network, no GPU. Runs anywhere Python runs.
+A pattern-based AI-writing detector, built as a working exploration of
+what a transparent, evidence-driven text auditor looks like -- one that
+shows its reasoning, admits what it doesn't know, and gets corrected
+when real evidence contradicts a design assumption, instead of quietly
+drifting out of date.
 
-## Structure
+See FINDINGS.md for real measured results (human vs. AI text,
+across 3 models) and TODO.md for exactly what's built, what's
+deliberately not, and why.
 
-```
+## Quick start
+pip install -r requirements.txt
+python -m pytest tests/ -v # 51 tests
+streamlit run app.py
+## What's actually in here
 layer1/
-  rules.py    Rule dataclass + REGISTRY (8 rules to start)
-  scorer.py   PatternScorer: runs every rule, computes density metrics
-tests/
-  test_layer1.py   11 tests: one per rule, one regression test for a real
-                    bug found live, one full-document regression test,
-                    two false-positive controls (human text, legal text)
-```
+rules.py 23 active regex-based rules (21 from the SKILL.md's
+24-pattern taxonomy + 2 original additions), plus 1
+more (curly_quotes) implemented but deliberately
+excluded from scoring -- see TODO.md for why
+scorer.py PatternScorer: runs every rule, quote normalization,
+density metrics
+exclusions.py Legal-boilerplate filter: suppresses flags that fall
+inside statutory citations, case citations, or
+standard contract phrases
 
-## Run the tests
+app.py Streamlit UI -- paste text, see it annotated with
+red (flagged) and gray (excluded, legal boilerplate)
+highlights, plus per-flag explanations
 
-```
-pip install pytest --break-system-packages
-python -m pytest tests/ -v
-```
+scripts/
+measure_fpr.py Reports flags/1000w and a per-rule breakdown
+against a folder of known-human text
+compare_corpora.py Side-by-side human-vs-AI comparison, with a
+per-rule "which side is this actually catching"
+verdict
 
-## Use it
+tests/ 51 tests across 5 files -- every rule, the exclusion
+filter, both measurement scripts, and the Streamlit
+app itself (via Streamlit's own AppTest harness)
 
-```python
-from layer1 import PatternScorer
+FINDINGS.md Real measured results, not aspirational ones: AI
+text scored 2.85x higher than human text across a
+6-human / 7-AI-document comparison spanning three
+models (ChatGPT, Gemini, Claude)
 
-result = PatternScorer().analyze(your_text)
-print(result.flag_count, result.density_per_1000w)
-for flag in result.flags:
-    print(flag.rule_id, flag.match_text, flag.explanation)
-```
+TODO.md Exact pattern coverage, what's deliberately not
+built and why, known limitations of what is
 
-## Add a new rule
+layer2_binoculars.py Statistical scorer (Binoculars method) -- NOT
+wired into this repo's pipeline. Needs a GPU and
+network access to run; exists as a standalone
+script, not yet integrated.
+## Design principles this project tries to hold to
 
-1. Write a `_find_x(text) -> list[tuple[start, end, matched_text]]` function
-   in `rules.py`.
-2. Wrap it in a `Rule(...)` and append to `REGISTRY`.
-3. Write at least one positive test and confirm it doesn't fire on
-   `HUMAN_CONTROL_TEXT` or `LEGAL_BOILERPLATE_TEXT` in the test file.
-
-That's the whole extension path — 16 more patterns from the original
-SKILL.md are still unported, and each one follows this same pattern.
-
-## Known limitation
-
-This is regex over raw text, not a dependency parse. It will miss
-phrasings it wasn't written for — the `rule_of_three_outline` bug fixed
-in this version is proof of that failure mode, not an exception to it.
-Treat every new rule as "probably has a gap," and let the false-positive
-controls in the test file be the thing that catches drift, not
-inspection by eye.
+- Every rule is a readable regex, not a black box -- open rules.py
+  and you can see exactly why anything got flagged.
+- Nothing gets scored without a positive test proving it fires, and a
+  negative test proving it doesn't misfire on a control text.
+- Real bugs found during actual use get a regression test locking in
+  the fix, not just a silent patch (see test_real_pasted_text_regression,
+  test_rule_of_three_outline_regression).
+- Claims get corrected when evidence contradicts them, not left to go
+  stale. curly_quotes was implemented, tested, then removed from
+  scoring after measurement showed it was detecting "typed in Microsoft
+  Word," not AI-written text -- see the git history around that change.
+- Legal boilerplate is deliberately excluded from scoring, because
+  formulaic writing isn't the same thing as AI-written text.
 
 ## What this is not
 
-This is Layer 1 only — pattern density, nothing statistical. It has no
-opinion about whether text is AI-written; it only counts surface tells.
-The ensemble verdict needs Layer 2 (Binoculars, see
-`layer2_binoculars.py` from earlier in the conversation) before any
-human/machine claim is defensible.
+Not a finished product. Not a validated benchmark -- see FINDINGS.md's
+"Limitations" section before citing any number in this repo as
+authoritative. Not a replacement for Turnitin, GPTZero, or similar
+tools, and not able to produce a single "% AI" confidence score --
+that would require Layer 2 (Binoculars), which exists as a script but
+isn't wired into the running pipeline.
