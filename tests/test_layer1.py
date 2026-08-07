@@ -95,22 +95,22 @@ def test_false_ranges_detected():
     assert any(f.rule_id == "false_ranges" for f in result.flags)
 
 
-def test_curly_quotes_detected():
+def test_curly_quotes_function_still_detects_correctly():
+    from layer1.rules import _find_curly_quotes
+    matches = _find_curly_quotes("This isn\u2019t a straight quote, it\u2019s curly.")
+    assert len(matches) == 2
+
+
+def test_curly_quotes_not_scored_by_pattern_scorer():
     result = PatternScorer().analyze("This isn\u2019t a straight quote, it\u2019s curly.")
-    curly_flags = [f for f in result.flags if f.rule_id == "curly_quotes"]
-    assert len(curly_flags) == 2
-
-
-def test_curly_quotes_absent_on_straight_quotes():
-    result = PatternScorer().analyze("This isn't a curly quote, it's straight.")
     assert not any(f.rule_id == "curly_quotes" for f in result.flags)
 
 
-def test_curly_quotes_does_not_break_other_rules():
+def test_negative_parallelism_still_fires_on_curly_quoted_text():
     result = PatternScorer().analyze("It\u2019s not a happy laugh. It\u2019s more of a sad one.")
     fired = {f.rule_id for f in result.flags}
     assert "negative_parallelism" in fired
-    assert "curly_quotes" in fired
+    assert "curly_quotes" not in fired
 def test_emoji_detected():
     result = PatternScorer().analyze("This is great! \U0001F600 Really happy about it.")
     assert any(f.rule_id == "emoji" for f in result.flags)

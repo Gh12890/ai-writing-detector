@@ -4,17 +4,41 @@
 
 \## Status
 
-22 of the SKILL.md's 24 official patterns are implemented and tested.
+22 of the SKILL.md's 24 official patterns have working detection logic.
+
+21 of those are actively SCORED. Pattern #18 (Curly Quotation Marks) was
+
+implemented, tested, then deliberately REMOVED from scoring based on
+
+real evidence: measuring it against an actual 4496-word human-written
+
+document (Word-authored, confirmed) showed it producing 42 of 48 total
+
+flags (87.5%) -- entirely because Microsoft Word autocorrects straight
+
+quotes to curly ones by default, not because of anything resembling
+
+AI-written text. The detection function is kept in rules.py (unregistered)
+
+in case it's useful differently later, but it no longer counts toward
+
+any score. This is the first pattern removed on real measured evidence
+
+rather than kept or dropped by design intuition -- see git history for
+
+the actual finding.
+
+
 
 2 additional rules (meta\_summary\_framing, parallel\_bullet\_em\_dash) are
 
-implemented but are NOT part of the original 24 -- they were added because
+implemented but are NOT part of the original 24. A legal-boilerplate
 
-they fired on the Mummy passage during testing, not because they're in the
+exclusion filter is also implemented (see below) -- separate from
 
-source taxonomy. Keep that distinction visible; don't let the rule count
+pattern coverage, it suppresses flags that fall inside statutory
 
-imply more taxonomy coverage than actually exists.
+citations, case citations, or standard contract phrases.
 
 
 
@@ -52,7 +76,7 @@ imply more taxonomy coverage than actually exists.
 
 \- \[x] #17 Emojis                         -> emoji
 
-\- \[x] #18 Curly Quotation Marks          -> curly\_quotes
+\- \[x] #18 Curly Quotation Marks          -> curly\_quotes (DETECTED but NOT SCORED -- see Status above)
 
 \- \[x] #19 Collaborative Communication Artifacts -> chatbot\_artifact
 
@@ -86,15 +110,67 @@ imply more taxonomy coverage than actually exists.
 
 
 
+\## Legal boilerplate exclusion filter -- DONE (v1), scope-limited
+
+Implemented in layer1/exclusions.py: statutory citations ("Section X of
+
+the Y Act, YYYY"), case citations (AIR/SCC formats), and a short list of
+
+standard contract phrases (WHEREAS, IN WITNESS WHEREOF, etc.) are
+
+detected and any Layer 1 span-flag overlapping them is suppressed.
+
+Verified with a deliberately constructed overlap test, not just a
+
+"doesn't misfire" check.
+
+
+
+Known v1 limitations, not yet fixed:
+
+\- No fuzzy matching against a real standard-clause library (the original
+
+&#x20; design called for this; v1 only does exact citation/phrase patterns)
+
+\- Document-level flags (em\_dash\_density, boldface\_overuse) are NOT
+
+&#x20; exclusion-aware -- a document that's mostly citations could still trip
+
+&#x20; a rate-based flag even if every individual span inside it is excluded
+
+\- Citation regexes are Indian-law-specific (Section/Act/AIR/SCC format)
+
+&#x20; and won't recognize other jurisdictions' citation conventions
+
+
+
+\## False-positive rate measurement -- tool built, real data collection in progress
+
+scripts/measure\_fpr.py is built and tested (3 tests, tests/test\_measure\_fpr.py):
+
+point it at a folder of .txt files and it reports flags/1000w, % of
+
+documents with any false positive, and a per-rule breakdown, computed
+
+transparently instead of asserted.
+
+
+
+Real corpus-building started: 2 genuine human-written documents measured
+
+so far (one M.A. History paper, one longer academic piece). Already
+
+produced one real, actionable finding -- see curly\_quotes removal above,
+
+found directly from this measurement, not from guessing. Corpus needs to
+
+grow to 15-20+ documents before the aggregate false-positive rate means
+
+anything statistically.
+
+
+
 \## Also not built, separate from the above
-
-\- No exclusion filter for legal/formulaic boilerplate (design discussed,
-
-&#x20; not implemented -- currently just verified the rules don't misfire on
-
-&#x20; one sample legal paragraph, which is not the same thing)
-
-\- No real false-positive rate. Two control texts is not a measured FPR.
 
 \- Layer 2 (statistical scorer) not built at all -- separate script exists
 

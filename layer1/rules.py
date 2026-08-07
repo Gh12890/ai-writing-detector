@@ -123,9 +123,15 @@ def _find_false_ranges(text: str) -> list[tuple[int, int, str]]:
 
 
 def _find_curly_quotes(text: str) -> list[tuple[int, int, str]]:
+    # NOT registered in REGISTRY below -- kept here as a function because
+    # the detection logic is still correct and might be useful later,
+    # but it's deliberately excluded from scoring. Real finding: on one
+    # genuine 4496-word human-written document (typed in Microsoft Word,
+    # confirmed), this rule alone produced 42 of 48 total flags (87.5%),
+    # entirely because Word autocorrects straight quotes to curly ones
+    # by default -- not evidence of anything about authorship.
     pattern = re.compile(r"[\u2018\u2019\u201c\u201d]")
     return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
-
 
 def _find_emojis(text: str) -> list[tuple[int, int, str]]:
     pattern = re.compile(
@@ -254,9 +260,6 @@ REGISTRY: list[Rule] = [
     Rule("false_ranges", "False range",
          "Two parallel 'from X to Y' ranges stacked for false comprehensiveness",
          _find_false_ranges),
-    Rule("curly_quotes", "Curly quotation marks",
-         "Typographic quotes/apostrophes, common in AI output and word processors",
-         _find_curly_quotes, use_original=True),
     Rule("emoji", "Emoji",
          "Emoji character, rare in formal prose and disproportionately common in chatbot output",
          _find_emojis, use_original=True),
