@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 
 from .rules import REGISTRY, Flag
+from .exclusions import find_excluded_spans, is_excluded
 
 EM_DASH_RATE_THRESHOLD_PER_1000W = 3.0
 BOLDFACE_RATE_THRESHOLD_PER_1000W = 5.0
@@ -29,6 +30,8 @@ class AnalysisResult:
     word_count: int
     flags: list[Flag] = field(default_factory=list)
     em_dash_rate_per_1000w: float = 0.0
+    excluded_spans: list[tuple[int, int]] = field(default_factory=list)
+    suppressed_count: int = 0
 
     @property
     def flag_count(self) -> int:
@@ -92,5 +95,22 @@ class PatternScorer:
                 )
             )
 
-        flags.sort(key=lambda f: f.start)
-        return AnalysisResult(text=normalized, word_count=word_count, flags=flags, em_dash_rate_per_1000w=em_dash_rate)
+        excluded_spans = find_excluded_spans(normalized)
+
+        kept_flags = []
+        suppressed_count = 0
+        for f in flags:
+            if f.end > f.start and is_excluded(f.start, f.end, excluded_spans):
+                suppressed_count += 1
+                continue
+            kept_flags.append(f)
+
+        kept_flags.sort(key=lambda f: f.start)
+        return AnalysisResult(
+            text=normalized,
+            word_count=word_count,
+            flags=kept_flags,
+            em_dash_rate_per_1000w=em_dash_rate,
+            excluded_spans=excluded_spans,
+            suppressed_count=suppressed_count,
+        )
