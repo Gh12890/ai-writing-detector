@@ -22,8 +22,20 @@ def test_run_analysis_shows_flags():
     at.button[0].click()
     at.run()
     assert not at.exception
-    assert len(at.metric) == 3
+    assert len(at.metric) == 4
     assert int(at.metric[1].value) > 0
+
+
+def test_suppressed_metric_reflects_legal_exclusion():
+    at = AppTest.from_file("../app.py")
+    at.run()
+    at.text_area(key="input_text").input(
+        "Section 5 of the Serves As A Model Act, 2020 governs procedure."
+    )
+    at.button[0].click()
+    at.run()
+    assert not at.exception
+    assert int(at.metric[3].value) >= 1
 
 
 def test_empty_input_shows_warning():

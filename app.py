@@ -20,20 +20,34 @@ text = st.text_area("Paste text to analyze", height=250, key="input_text")
 run_clicked = st.button("Run analysis")
 
 
-def render_highlighted(document, flags):
-    span_flags = sorted((f for f in flags if f.end > f.start), key=lambda f: f.start)
+def render_highlighted(document, flags, excluded_spans=()):
+    def safe(s):
+        escaped = html.escape(s)
+        for ch in ("*", "_", "`", "#"):
+            escaped = escaped.replace(ch, f"\\{ch}")
+        return escaped
+
+    markers = [
+        (f.start, f.end, "background:#f8d7da;", html.escape(f.rule_name))
+        for f in flags if f.end > f.start
+    ] + [
+        (es, ee, "background:#e2e3e5;color:#6c757d;", "Excluded: legal boilerplate")
+        for es, ee in excluded_spans
+    ]
+    markers.sort(key=lambda m: m[0])
+
     pieces = []
     cursor = 0
-    for f in span_flags:
-        if f.start < cursor:
+    for start, end, style, title in markers:
+        if start < cursor:
             continue
-        pieces.append(html.escape(document[cursor:f.start]))
+        pieces.append(safe(document[cursor:start]))
         pieces.append(
-            f'<span style="background:#f8d7da;border-radius:3px;padding:1px 2px;" '
-            f'title="{html.escape(f.rule_name)}">{html.escape(document[f.start:f.end])}</span>'
+            f'<span style="{style}border-radius:3px;padding:1px 2px;" '
+            f'title="{title}">{safe(document[start:end])}</span>'
         )
-        cursor = f.end
-    pieces.append(html.escape(document[cursor:]))
+        cursor = end
+    pieces.append(safe(document[cursor:]))
     return "".join(pieces).replace("\n", "<br>")
 
 
@@ -43,13 +57,17 @@ if run_clicked:
     else:
         result = PatternScorer().analyze(text)
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         col1.metric("Word count", result.word_count)
         col2.metric("Flags", result.flag_count)
         col3.metric("Density /1000w", result.density_per_1000w)
+        col4.metric("Suppressed (legal)", result.suppressed_count)
 
         st.subheader("Annotated text")
-        st.markdown(render_highlighted(text, result.flags), unsafe_allow_html=True)
+        st.markdown(
+            render_highlighted(text, result.flags, result.excluded_spans),
+            unsafe_allow_html=True,
+        )
 
         st.subheader(f"Flagged spans ({result.flag_count})")
         if not result.flags:
