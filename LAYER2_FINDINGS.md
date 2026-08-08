@@ -222,3 +222,121 @@ an AI detector" concern more serious, not less.
 
 &#x20; of 512-token truncation, for the longer documents
 
+
+
+\## Update: full-document pooling tested as a truncation fix -- made it worse
+
+
+
+The 512-token truncation flagged above as a limitation was tested directly:
+
+chunk each document into consecutive 512-token windows, score each with the
+
+same binoculars\_score(), and pool cross-entropy sums across all chunks
+
+before computing a single ratio (not an average of per-chunk ratios --
+
+pooling at the cross-entropy level before the final division, which is the
+
+mathematically correct way to combine chunks of different sizes).
+
+
+
+This did not fix the truncation limitation. It made the human/AI
+
+separation worse, not better, once read past the headline number.
+
+
+
+|                | Mean distance from 1.0, truncated (512 tok) | Mean distance from 1.0, full-document pooled |
+
+|----------------|-----------------------------------------------|-------------------------------------------------|
+
+| Human (n=6)    | 0.2148                                         | 0.1965                                           |
+
+| AI (n=7)       | 0.1161                                         | 0.1366                                           |
+
+| Gap            | 0.0987                                         | 0.0599 (39% smaller)                             |
+
+
+
+And with the sample05 outlier excluded (same outlier flagged earlier in
+
+this document), the direction actually flips:
+
+
+
+|                | Human mean (n=5, sample05 excluded) | AI mean (n=7)                                  |
+
+|----------------|----------------------------------------|--------------------------------------------------|
+
+| Truncated      | 0.1375                                  | 0.1161 (AI closer to 1.0 -- correct direction)    |
+
+| Full-document  | 0.1193                                  | 0.1366 (human closer to 1.0 -- wrong direction)   |
+
+
+
+This wasn't one noisy pair -- it was a consistent, systematic shift.
+
+Comparing truncated vs. full-document distance per document: 6 of 7 AI
+
+documents moved further from 1.0 (more human-looking) under full-document
+
+pooling. Only 1 AI document (sample13) moved closer. Meanwhile 2 of 6 human
+
+documents (sample01, sample04) moved closer to 1.0 (more machine-looking).
+
+That's a real, repeatable pattern in this run, not scatter.
+
+
+
+Working hypothesis for why, not confirmed: truncation kept only each
+
+document's opening section -- plausibly the most deliberately-composed part
+
+of any piece of writing, human or AI. Pooling in the middle and later
+
+sections may add noisier, less distinctive material that dilutes whatever
+
+signal the opening carried, for both classes of text. Untested against
+
+this data specifically.
+
+
+
+sample05 remains unexplained and is now the single most consequential
+
+data point in this entire Layer 2 analysis -- it drove the outlier
+
+finding in the original truncated run AND remains the dominant outlier
+
+in the full-document run (distance 0.5830, nearly 3x the next-highest
+
+score in either corpus, either method). It has not been directly
+
+inspected for content -- only its aggregate stats (544 words, shortest
+
+document in the human corpus, WhatsApp export) have been reasoned about.
+
+Actually reading it and checking for anything unusual (heavy quotation,
+
+unusual formatting, code-switching, non-standard characters) is the
+
+single highest-value remaining step in this whole Layer 2 investigation,
+
+and it's a five-minute task, not a re-run.
+
+
+
+Conclusion: full-document pooling is not currently a net improvement
+
+and should not be treated as "the fix" for the truncation limitation.
+
+The original 512-token approach and this pooled approach are both weak,
+
+in different and not-yet-fully-understood ways. Neither is validated
+
+enough to trust over the other without more data and, specifically,
+
+without resolving what's actually happening in sample05.
+
