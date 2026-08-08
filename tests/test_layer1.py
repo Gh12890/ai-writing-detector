@@ -267,6 +267,45 @@ def test_em_dash_outside_citation_still_triggers_document_flag():
     )
     result = PatternScorer().analyze(text)
     assert any(f.rule_id == "em_dash_density" for f in result.flags)
+def test_flags_by_tier_splits_correctly():
+    text = (
+        "This groundbreaking approach serves as a testament to innovation.\n\n"
+        "1. First Point\n2. Second Point\n3. Third Point"
+    )
+    result = PatternScorer().analyze(text)
+    by_tier = result.flags_by_tier()
+    assert len(by_tier["structural"]) == 3
+    assert len(by_tier["lexical"]) == 3
+    assert {f.rule_id for f in by_tier["structural"]} == {"rule_of_three_outline"}
+    assert {f.rule_id for f in by_tier["lexical"]} == {
+        "promotional_language", "copula_avoidance", "ai_vocabulary"
+    }
+
+
+def test_tier_densities_computed_independently():
+    text = (
+        "This groundbreaking approach serves as a testament to innovation.\n\n"
+        "1. First Point\n2. Second Point\n3. Third Point"
+    )
+    result = PatternScorer().analyze(text)
+    assert result.structural_density_per_1000w > 0
+    assert result.lexical_density_per_1000w > 0
+    combined = result.structural_density_per_1000w + result.lexical_density_per_1000w
+    assert abs(combined - result.density_per_1000w) < 0.2
+
+
+def test_em_dash_density_and_boldface_overuse_tagged_structural():
+    text = "One \u2014 two \u2014 three \u2014 four \u2014 five \u2014 six words here total count."
+    result = PatternScorer().analyze(text)
+    by_tier = result.flags_by_tier()
+    assert any(f.rule_id == "em_dash_density" for f in by_tier["structural"])
+    assert not any(f.rule_id == "em_dash_density" for f in by_tier["lexical"])
+
+
+def test_no_flags_gives_zero_tier_densities():
+    result = PatternScorer().analyze("A plain, ordinary sentence with nothing unusual in it.")
+    assert result.structural_density_per_1000w == 0.0
+    assert result.lexical_density_per_1000w == 0.0
 
 def test_legal_boilerplate_not_over_flagged():
     """Formulaic legal citation language should not trip the same rules as

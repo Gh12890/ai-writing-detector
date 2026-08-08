@@ -59,9 +59,23 @@ if run_clicked:
 
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Word count", result.word_count)
-        col2.metric("Flags", result.flag_count)
-        col3.metric("Density /1000w", result.density_per_1000w)
-        col4.metric("Suppressed (legal)", result.suppressed_count)
+        col2.metric("Total flags", result.flag_count)
+        col3.metric("Structural /1000w", result.structural_density_per_1000w)
+        col4.metric("Lexical /1000w", result.lexical_density_per_1000w)
+
+        st.caption(
+            "Structural (formatting/syntax patterns) and lexical (word/phrase "
+            "lists) are reported separately, not blended into one score. "
+            "Real measurement (see FINDINGS.md) found lexical flag density "
+            "correlated strongly with formal writing register (r=0.722 with "
+            "sentence length) on confirmed human text -- structural rules "
+            "showed no such correlation across the same corpus. Treat "
+            "lexical flags as weaker, register-confounded signal, and "
+            "structural flags as the more reliable evidence, until further "
+            "measurement says otherwise."
+        )
+        if result.suppressed_count:
+            st.caption(f"{result.suppressed_count} flag(s) suppressed as legal boilerplate.")
 
         st.subheader("Annotated text")
         st.markdown(
@@ -69,11 +83,22 @@ if run_clicked:
             unsafe_allow_html=True,
         )
 
-        st.subheader(f"Flagged spans ({result.flag_count})")
-        if not result.flags:
-            st.write("No pattern flags found.")
+        by_tier = result.flags_by_tier()
+        st.subheader(f"Structural flags ({len(by_tier['structural'])})")
+        if not by_tier["structural"]:
+            st.write("None found.")
         else:
-            for flag in result.flags:
+            for flag in by_tier["structural"]:
+                label = f"[{flag.rule_id}] {flag.match_text[:60]!r}"
+                with st.expander(label):
+                    st.write(f"**Rule:** {flag.rule_name}")
+                    st.write(f"**Why flagged:** {flag.explanation}")
+
+        st.subheader(f"Lexical flags ({len(by_tier['lexical'])})")
+        if not by_tier["lexical"]:
+            st.write("None found.")
+        else:
+            for flag in by_tier["lexical"]:
                 label = f"[{flag.rule_id}] {flag.match_text[:60]!r}"
                 with st.expander(label):
                     st.write(f"**Rule:** {flag.rule_name}")

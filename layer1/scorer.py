@@ -8,6 +8,16 @@ from .exclusions import find_excluded_spans, is_excluded
 EM_DASH_RATE_THRESHOLD_PER_1000W = 3.0
 BOLDFACE_RATE_THRESHOLD_PER_1000W = 5.0
 
+# em_dash_density and boldface_overuse are document-level checks computed
+# directly below, not Rule objects in REGISTRY, so they don't carry a
+# .tier attribute the way registry rules do. Both are format/rate checks,
+# not vocabulary lists, so they belong in the same "structural" bucket --
+# this map is how flags_by_tier() knows that despite them living outside
+# the Rule system.
+_RULE_TIER = {rule.rule_id: rule.tier for rule in REGISTRY}
+_RULE_TIER["em_dash_density"] = "structural"
+_RULE_TIER["boldface_overuse"] = "structural"
+
 _QUOTE_MAP = str.maketrans({
     "\u2018": "'", "\u2019": "'",
     "\u201c": '"', "\u201d": '"',
@@ -42,6 +52,27 @@ class AnalysisResult:
         for flag in self.flags:
             grouped.setdefault(flag.rule_id, []).append(flag)
         return grouped
+
+    def flags_by_tier(self) -> dict[str, list[Flag]]:
+        grouped: dict[str, list[Flag]] = {"structural": [], "lexical": []}
+        for flag in self.flags:
+            tier = _RULE_TIER.get(flag.rule_id, "lexical")
+            grouped[tier].append(flag)
+        return grouped
+
+    def _tier_density(self, tier: str) -> float:
+        if self.word_count == 0:
+            return 0.0
+        count = len(self.flags_by_tier()[tier])
+        return round(count / self.word_count * 1000, 1)
+
+    @property
+    def structural_density_per_1000w(self) -> float:
+        return self._tier_density("structural")
+
+    @property
+    def lexical_density_per_1000w(self) -> float:
+        return self._tier_density("lexical")
 
 
 def _mask_excluded(text: str, excluded_spans: list[tuple[int, int]]) -> str:

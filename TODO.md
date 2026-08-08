@@ -208,3 +208,67 @@ review). Current numbers are directional, not final.
 
 &#x20; outside this repo, requires GPU, not yet run for real.
 
+
+
+\## Formality confound -- partial fix shipped (tier split)
+
+Real problem, real evidence, real fix -- not a guess. analyze\_confound.py
+
+found r=0.722 correlation between flag density and avg sentence length
+
+across the human corpus in FINDINGS.md. Investigating which rules
+
+produced that: 100% of the flags in that correlation came from lexical
+
+(word/phrase-list) rules -- rule\_of\_three\_outline and em\_dash\_density,
+
+the two rules that survived all 3 AI models with zero human false
+
+positives, never fired on a single human document, so they couldn't
+
+have been part of that correlation either way.
+
+
+
+Fix shipped: every rule now carries a tier ("structural" or "lexical").
+
+AnalysisResult reports structural\_density\_per\_1000w and
+
+lexical\_density\_per\_1000w separately instead of one blended number.
+
+analyze\_confound.py now computes correlation per tier, not just
+
+overall. app.py's UI shows both densities and both flag lists
+
+separately, with an explicit caption explaining why.
+
+
+
+Honest limits of this fix, stated plainly:
+
+\- This does NOT prove structural rules are confound-free. They simply
+
+&#x20; haven't fired often enough on human text yet to test either way --
+
+&#x20; "None" (undefined correlation, no variance) is not the same claim as
+
+&#x20; "zero correlation, proven clean." The code and the UI both say this
+
+&#x20; explicitly rather than let the silence read as validation.
+
+\- Tier assignment (9 structural, 14 lexical) was done by judgment, not
+
+&#x20; measurement -- e.g. superficial\_ing\_analysis is flagged in code
+
+&#x20; comments as a borderline case (fixed verb list, but structural
+
+&#x20; trigger position).
+
+\- Real next step: keep running analyze\_confound.py as corpus/ grows.
+
+&#x20; If structural rules eventually fire enough to get a real correlation
+
+&#x20; number, that's the point this hypothesis actually gets tested rather
+
+&#x20; than assumed.
+

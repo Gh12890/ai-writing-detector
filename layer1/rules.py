@@ -27,6 +27,24 @@ class Rule:
     explanation: str
     finder: Callable[[str], list[tuple[int, int, str]]]
     use_original: bool = False
+    # "structural": syntax/formatting patterns (list structure, em dash
+    # rate, sentence-contrast shape). "lexical": specific word/phrase
+    # lists (ai_vocabulary, filler_phrase, etc.).
+    #
+    # This split exists because of a real, measured finding, not a
+    # guess: analyze_confound.py found a strong correlation (r=0.722)
+    # between flag density and average sentence length across the human
+    # corpus in FINDINGS.md -- and every one of those flags came from
+    # lexical rules. The two rules that survived testing against all 3
+    # AI models with zero human false positives (rule_of_three_outline,
+    # em_dash_density) never fired on a single human document, so they
+    # contributed nothing to that correlation. The confound currently
+    # measured is a lexical-rule problem, not evidence against
+    # structural rules -- but structural rules also haven't fired often
+    # enough yet to be proven clean either, just not yet caught doing
+    # the same thing. Treat "structural = safe" as a working hypothesis
+    # supported by current evidence, not a settled fact.
+    tier: str = "lexical"
 
     def apply(self, text: str) -> list[Flag]:
         return [
@@ -123,15 +141,9 @@ def _find_false_ranges(text: str) -> list[tuple[int, int, str]]:
 
 
 def _find_curly_quotes(text: str) -> list[tuple[int, int, str]]:
-    # NOT registered in REGISTRY below -- kept here as a function because
-    # the detection logic is still correct and might be useful later,
-    # but it's deliberately excluded from scoring. Real finding: on one
-    # genuine 4496-word human-written document (typed in Microsoft Word,
-    # confirmed), this rule alone produced 42 of 48 total flags (87.5%),
-    # entirely because Word autocorrects straight quotes to curly ones
-    # by default -- not evidence of anything about authorship.
     pattern = re.compile(r"[\u2018\u2019\u201c\u201d]")
     return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
 
 def _find_emojis(text: str) -> list[tuple[int, int, str]]:
     pattern = re.compile(
@@ -201,6 +213,7 @@ def _find_generic_positive_conclusion(text: str) -> list[tuple[int, int, str]]:
     )
     return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
 
+
 def _find_notability_emphasis(text: str) -> list[tuple[int, int, str]]:
     pattern = re.compile(
         r"\b(has been (featured|covered) (in|by)|"
@@ -229,6 +242,8 @@ def _find_copula_avoidance(text: str) -> list[tuple[int, int, str]]:
 def _find_inline_header_list(text: str) -> list[tuple[int, int, str]]:
     pattern = re.compile(r"^\s*[\*\-]\s+\*{2}[^*\n]+:\*{2}", re.M)
     return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
 REGISTRY: list[Rule] = [
     Rule("chatbot_artifact", "Chatbot artifact",
          "Assistant-style sign-off or offer to continue, not how a person talks mid-thought",
@@ -238,13 +253,13 @@ REGISTRY: list[Rule] = [
          _find_meta_summary),
     Rule("negative_parallelism", "Negative parallelism",
          "'It's not X, it's Y' contrast structure",
-         _find_negative_parallelism),
+         _find_negative_parallelism, tier="structural"),
     Rule("parallel_bullet_em_dash", "Parallel bullet template",
          "Two or more bullets built on an identical 'X, em dash, clause' shape",
-         _find_parallel_bullets),
+         _find_parallel_bullets, tier="structural"),
     Rule("rule_of_three_outline", "Rule-of-three outline",
          "Three or more numbered items, each a short abstract-noun label",
-         _find_rule_of_three_outline),
+         _find_rule_of_three_outline, tier="structural"),
     Rule("filler_phrase", "Filler phrase",
          "Wordy construction with a shorter natural equivalent",
          _find_filler_phrases),
@@ -259,10 +274,10 @@ REGISTRY: list[Rule] = [
          _find_ai_vocabulary),
     Rule("false_ranges", "False range",
          "Two parallel 'from X to Y' ranges stacked for false comprehensiveness",
-         _find_false_ranges),
+         _find_false_ranges, tier="structural"),
     Rule("emoji", "Emoji",
          "Emoji character, rare in formal prose and disproportionately common in chatbot output",
-         _find_emojis, use_original=True),
+         _find_emojis, use_original=True, tier="structural"),
     Rule("vague_attribution", "Vague attribution",
          "Cites an unnamed source ('some argue', 'industry observers') instead of a real one",
          _find_vague_attribution),
@@ -286,11 +301,11 @@ REGISTRY: list[Rule] = [
          _find_notability_emphasis),
     Rule("outline_challenges_section", "Outline-style section heading",
          "Stock 'Challenges and Future Prospects'-style heading, common in AI-generated overviews",
-         _find_outline_challenges_section),
+         _find_outline_challenges_section, tier="structural"),
     Rule("copula_avoidance", "Copula avoidance",
          "'Serves as/functions as/acts as a' used in place of the plainer 'is a'",
          _find_copula_avoidance),
     Rule("inline_header_list", "Inline-header vertical list",
          "Bullet opening with a bolded label and colon, common in AI-generated lists",
-         _find_inline_header_list),
+         _find_inline_header_list, tier="structural"),
 ]
