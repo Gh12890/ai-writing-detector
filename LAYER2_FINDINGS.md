@@ -340,3 +340,65 @@ enough to trust over the other without more data and, specifically,
 
 without resolving what's actually happening in sample05.
 
+
+
+\## sample05 outlier -- investigated, plausibly explained
+
+
+
+Actually read, not just reasoned about from aggregate stats: sample05 is
+
+a single-voice, emotionally specific personal narrative -- one person's
+
+private disclosure of significant personal hardship, not a back-and-forth
+
+conversation. No further content details are recorded here; this document
+
+contains private personal material and stays excluded from git via
+
+.gitignore, same as the rest of corpus/.
+
+
+
+This plausibly explains the extreme score. Perplexity measures how
+
+predictable text is to a model trained on generic text. Deeply specific,
+
+personal emotional disclosure is about as far from "generic, predictable"
+
+language as text gets -- there's little in generic training data that
+
+resembles an unrepeatable, individual account like this one. That
+
+unpredictability is exactly what a high Binoculars distance-from-1.0
+
+score reflects, and it would be concentrated further by the document
+
+being short (544 words, the shortest in the corpus) and single-voice (no
+
+conversational turn-taking to dilute it).
+
+
+
+Reframe: this isn't an unexplained anomaly or evidence the method is
+
+broken -- it's a plausible instance of the method correctly registering
+
+genuinely unpredictable, specific human writing as strongly human. It's
+
+an extreme data point, not necessarily a flawed one.
+
+
+
+Not confirmed beyond this single case. Would need more emotionally
+
+specific, single-voice personal-narrative samples in the corpus to know
+
+whether this is a general pattern (this whole category of writing scores
+
+as an outlier) or something particular to this one document. Given the
+
+privacy of this material, deliberately expanding that specific category
+
+in the corpus is not a direction this project intends to pursue.
+
