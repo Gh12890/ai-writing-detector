@@ -272,3 +272,21 @@ Honest limits of this fix, stated plainly:
 
 &#x20; than assumed.
 
+
+
+\## CI added -- tests now run automatically, not just by hand
+
+.github/workflows/tests.yml runs the full pytest suite on every push and
+
+pull request to master, on Python 3.11 and 3.12. Before this, "69 tests
+
+passing" was only verifiable by whoever ran pytest locally and pasted
+
+the output -- now it's checked automatically and visible as a public
+
+badge on README.md. Does not run Layer 2 (layer2\_binoculars.py isn't in
+
+the pytest suite and needs a GPU CI runners don't have) -- CI covers
+
+Layer 1, the exclusion filter, and the measurement/analysis scripts only.
+

@@ -1,6 +1,8 @@
 # Draft Audit
 
-A pattern-based AI-writing detector, built as a working exploration of
+[![Tests](https://github.com/Gh12890/ai-writing-detector/actions/workflows/tests.yml/badge.svg)](https://github.com/Gh12890/ai-writing-detector/actions/workflows/tests.yml)
+
+A pattern-based AI-writing detector,, built as a working exploration of
 what a transparent, evidence-driven text auditor looks like -- one that
 shows its reasoning, admits what it doesn't know, and gets corrected
 when real evidence contradicts a design assumption, instead of quietly
