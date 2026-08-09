@@ -290,3 +290,49 @@ the pytest suite and needs a GPU CI runners don't have) -- CI covers
 
 Layer 1, the exclusion filter, and the measurement/analysis scripts only.
 
+
+
+\## Test coverage measured -- found and closed a real gap
+
+Running pytest-cov for the first time found something worth admitting:
+
+scripts/compare\_corpora.py had 0% coverage despite tests/test\_compare\_corpora.py
+
+existing -- that file's own docstring said outright it only tested the
+
+shared compute\_fpr\_stats() dependency, never compare\_corpora.py's own
+
+compare() function. scripts/measure\_fpr.py was similarly thin (52%) for
+
+the same reason -- its main() print function was untested too.
+
+
+
+Added tests/test\_compare\_corpora\_cli.py and tests/test\_measure\_fpr\_cli.py
+
+to actually exercise both files' own output functions (using pytest's
+
+capsys to check printed output, not just return values). Coverage moved
+
+from 78% to 93% overall. Now wired into CI (.github/workflows/tests.yml)
+
+so this number gets recomputed on every push, not just measured once
+
+and left to go stale like several other numbers in this project did
+
+before someone checked them again.
+
+
+
+Remaining gaps, honestly: layer1/rules.py 96% (lines 69-74 uncovered),
+
+layer1/scorer.py 93% (lines 53, 57-60, 79), scripts/analyze\_confound.py
+
+93% (lines 106-109), scripts/measure\_fpr.py 92% (lines 91-94),
+
+scripts/compare\_corpora.py 87% (lines 55, 57, 64-67). Not yet
+
+investigated line by line -- next person picking this up should check
+
+what's actually on those lines before assuming they're low-risk.
+
