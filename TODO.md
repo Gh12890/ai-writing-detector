@@ -336,3 +336,23 @@ investigated line by line -- next person picking this up should check
 
 what's actually on those lines before assuming they're low-risk.
 
+
+
+
+
+\## LICENSE added -- a gap that was flagged and then dropped, now fixed
+
+Worth admitting: a LICENSE file was identified as missing when the CI
+
+work started, then never actually added -- coverage measurement got
+
+the follow-through instead and this got left as an open thread. Fixed
+
+now: MIT license added, README.md points to it. Without a license file,
+
+GitHub's default terms mean nobody can legally reuse or fork this
+
+repo, which undercut the "here's a working example" portfolio framing
+
+this project has been built around the whole time.
+

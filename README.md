@@ -71,6 +71,15 @@ script, not yet integrated.
 - Legal boilerplate is deliberately excluded from scoring, because
   formulaic writing isn't the same thing as AI-written text.
 
+## License
+
+MIT -- see LICENSE. Use it, fork it, adapt it. If you build on the
+detection rules or the exclusion filter for something with real stakes
+attached to its output, please read TODO.md and FINDINGS.md first --
+this project's own measurements are the reason not to trust it blindly.
+
+## What this is not
+
 ## What this is not
 
 Not a finished product. Not a validated benchmark -- see FINDINGS.md's
