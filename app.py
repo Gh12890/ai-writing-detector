@@ -10,18 +10,30 @@ st.title("Draft Audit")
 st.caption("Pattern and statistical review, span by span")
 
 st.info(
-    "Statistical layer (Binoculars) is not built into this app yet -- "
-    "see layer2_binoculars.py, run separately, GPU required. Everything "
-    "below is Layer 1 pattern signal only. Treat any result here as "
-    "partial, not a final human/machine verdict."
+    "Layer 1 (pattern rules) runs instantly and offline. Layer 2 "
+    "(statistical scorer) is opt-in below -- it downloads ~3GB of model "
+    "weights on first use, needs internet access, and runs on CPU here "
+    "(no GPU), so expect anywhere from ~10 seconds to a couple of "
+    "minutes per document. See LAYER2_FINDINGS.md before trusting any "
+    "Layer 2 number: it's small-sample, unvalidated, and one of its two "
+    "scoring methods was tested and found not to help."
 )
 
 text = st.text_area("Paste text to analyze", height=250, key="input_text")
+run_layer2 = st.checkbox(
+    "Also run Layer 2 (statistical scorer) -- slow, downloads models on first use"
+)
 run_clicked = st.button("Run analysis")
 
 
-def render_highlighted(document, flags, excluded_spans=()):
-    def safe(s):
+@st.cache_resource(show_spinner=False)
+def _load_layer2_models():
+    from layer2_binoculars import load_models
+    return load_models()
+
+
+def render_highlighted(document: str, flags, excluded_spans=()) -> str:
+    def safe(s: str) -> str:
         escaped = html.escape(s)
         for ch in ("*", "_", "`", "#"):
             escaped = escaped.replace(ch, f"\\{ch}")
@@ -103,3 +115,45 @@ if run_clicked:
                 with st.expander(label):
                     st.write(f"**Rule:** {flag.rule_name}")
                     st.write(f"**Why flagged:** {flag.explanation}")
+
+        if run_layer2:
+            st.subheader("Layer 2: statistical scorer")
+            try:
+                with st.spinner("Loading models (first run downloads ~3GB, then cached)..."):
+                    observer, performer, tok, device = _load_layer2_models()
+                st.caption(f"Models loaded. Running on: {device}")
+
+                from layer2_binoculars import binoculars_score, binoculars_score_full_document
+
+                with st.spinner("Scoring (truncated, first ~400 words)..."):
+                    truncated_score = binoculars_score(text, observer, performer, tok, device)
+
+                with st.spinner("Scoring (full document, pooled across chunks)..."):
+                    full_result = binoculars_score_full_document(text, observer, performer, tok, device)
+
+                l2col1, l2col2 = st.columns(2)
+                l2col1.metric("Truncated score", f"{truncated_score:.4f}")
+                l2col1.caption(f"Distance from 1.0: {abs(truncated_score - 1.0):.4f}")
+                if full_result["pooled_score"] is not None:
+                    l2col2.metric("Full-document pooled score", f"{full_result['pooled_score']:.4f}")
+                    l2col2.caption(
+                        f"Distance from 1.0: {abs(full_result['pooled_score'] - 1.0):.4f} "
+                        f"({full_result['num_chunks']} chunks, {full_result['total_tokens_scored']} tokens)"
+                    )
+                else:
+                    l2col2.write("Full-document score unavailable (empty or unscoreable text).")
+
+                st.caption(
+                    "Closer to 1.0 = more machine-like, further = more human-like, per the "
+                    "Binoculars paper's convention. NEITHER score here is validated or "
+                    "calibrated -- there is no threshold that means 'this is AI.' Full-document "
+                    "pooling was tested against this project's real corpus and found to REDUCE "
+                    "human/AI separation, not improve it (see LAYER2_FINDINGS.md). Both numbers "
+                    "are shown because neither method is currently trusted over the other."
+                )
+            except Exception as e:
+                st.error(
+                    f"Layer 2 failed to load or run: {e}\n\n"
+                    "Common causes: no internet connection (needed to download model weights "
+                    "the first time), or insufficient memory for two 1.5B-parameter models on CPU."
+                )

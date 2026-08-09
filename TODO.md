@@ -356,3 +356,87 @@ repo, which undercut the "here's a working example" portfolio framing
 
 this project has been built around the whole time.
 
+
+
+
+
+\## Layer 2 integrated into the Streamlit app -- real gap closed, honestly
+
+Two things were true before tonight that shouldn't have been: app.py
+
+only ever used Layer 1 (the "Layer 2 not built in yet" banner had sat
+
+unchanged since the night it was written), and layer2\_binoculars.py --
+
+including the full-document pooling code that LAYER2\_FINDINGS.md
+
+reports real numbers from -- had never actually been committed to this
+
+repo at all. It only ever existed as a standalone downloadable file and
+
+in Colab notebook cells. That's now fixed: layer2\_binoculars.py is a
+
+real file in this repo, both scoring functions (truncated and
+
+full-document pooled) are in it, and app.py has an opt-in checkbox that
+
+runs both and displays them side by side with the honest caveat that
+
+neither is validated and full-document pooling was tested and found to
+
+not help (see LAYER2\_FINDINGS.md).
+
+
+
+Deliberately opt-in, not automatic: loading two 1.5B-parameter models on
+
+CPU (no GPU on the machine this runs on) takes real time and downloads
+
+\~3GB on first use. Making that automatic on every "Run analysis" click
+
+would make the whole app unusable.
+
+
+
+Tested: the pooling/chunking math (5 tests, tests/test\_layer2\_binoculars.py)
+
+using fully synthetic fake models -- no real weights, no network, so
+
+these run in CI. NOT tested automatically: load\_models() itself, which
+
+needs real network access and would make CI slow/flaky/costly if it
+
+ran on every push (same reasoning as the Layer 2 GPU work throughout
+
+this project). Manually verified once, in this session, that the app
+
+correctly catches a real model-loading failure and shows a clean error
+
+instead of crashing -- confirmed against this sandbox's actual blocked
+
+network, not a mocked failure.
+
+
+
+layer2\_binoculars.py's own coverage is 71% (vs. 93% for layer1+scripts)
+
+\-- the uncovered lines are load\_models() and the \_\_main\_\_ CLI block,
+
+both excluded from automated testing for the reason above. Not folded
+
+into the main coverage number reported elsewhere, since mixing
+
+by-design-untestable code into that figure would make an honest 93%
+
+look like a worse 89% for the wrong reason.
+
+
+
+Still unverified: whether this actually works end-to-end on a real
+
+Windows machine, with real internet, on real new text. That's the next
+
+step, and it needs a human to actually click the checkbox and watch
+
+what happens -- same as every other piece of Layer 2 work so far.
+
