@@ -154,6 +154,8 @@ if run_clicked:
             except Exception as e:
                 st.error(
                     f"Layer 2 failed to load or run: {e}\n\n"
-                    "Common causes: no internet connection (needed to download model weights "
-                    "the first time), or insufficient memory for two 1.5B-parameter models on CPU."
+                    "Common causes: missing dependencies (run `pip install -r requirements.txt` "
+                    "to get torch and transformers), no internet connection (needed to download "
+                    "model weights the first time), or insufficient memory for two "
+                    "1.5B-parameter models on CPU."
                 )

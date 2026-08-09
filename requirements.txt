@@ -1,3 +1,5 @@
 ﻿streamlit==1.61.1
 pytest
 pytest-cov
+torch
+transformers
