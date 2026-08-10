@@ -326,3 +326,101 @@ document in ai\_corpus/ may have been under-scored the same way this
 
 essay was. That re-run hasn't happened yet.
 
+
+
+\## A real regression, found immediately by re-running the comparison: repeated\_transitions inverted the whole result
+
+
+
+Following through on "re-run compare\_corpora.py and analyze\_confound.py
+
+with the new rules" (flagged as not-yet-done above) found a real,
+
+serious bug within one run.
+
+
+
+\*\*What happened:\*\* re-running the human-vs-AI comparison with the three
+
+new rules active showed the AI rate DROPPING from 2.85x the human rate
+
+to 0.93x -- meaning human text now scored as slightly MORE machine-like
+
+than AI text. That's not a smaller improvement than hoped; it's an
+
+inversion of the project's headline result.
+
+
+
+\*\*Diagnosis, confirmed by the numbers, not guessed:\*\* repeated\_transitions
+
+alone accounted for the entire swing -- 31 human flags, 0 AI flags, on
+
+a rule that was supposed to be roughly symmetric. analyze\_confound.py's
+
+per-document breakdown showed the highest structural density
+
+concentrated in the two longest human documents (sample02, sample03),
+
+even after already dividing by word count -- a strong sign of a
+
+document-length artifact, not a real authorship signal.
+
+
+
+\*\*Root cause:\*\* the rule used a fixed "3+ uses anywhere in the
+
+document" threshold with no length adjustment. A long document
+
+naturally uses a connective like "however" a few times across many
+
+pages -- unremarkable. The same 3 uses in a \~300-word essay (the
+
+original motivating case) is genuinely unusual. em\_dash\_density and
+
+boldface\_overuse were already built as rate checks specifically to
+
+avoid this failure mode; repeated\_transitions was added without that
+
+same safeguard.
+
+
+
+\*\*Fixed:\*\* the threshold now scales with document length
+
+(max(3, word\_count / 500)), so the original short-essay catch is
+
+preserved exactly while long-form documents need proportionally more
+
+repetition to trigger. Verified against the real essay (still fires,
+
+threshold stays at 3 for \~300 words) and a synthetic long document
+
+using "however" 3 times across \~4,800 words (no longer fires, needed
+
+\~10 uses at that length). Locked in with a permanent regression test.
+
+
+
+\*\*The real lesson, worth stating plainly:\*\* this project's own stated
+
+practice -- re-run the comparison after any rule change, don't trust a
+
+single document's result -- is exactly what caught this before it sat
+
+undetected in a "real" finding. If compare\_corpora.py hadn't been
+
+re-run immediately after the previous fix, this inversion would have
+
+gone unnoticed, and the next person reading this repo would have
+
+inherited a broken headline number without knowing it.
+
+
+
+\*\*Re-run again after this fix, results pending\*\* -- update this section
+
+once compare\_corpora.py and analyze\_confound.py are re-run against
+
+the fixed rule.
+

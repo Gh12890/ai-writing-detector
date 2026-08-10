@@ -506,3 +506,37 @@ fix existed -- the real aggregate impact on the 2.85x gap is currently
 
 unknown, only inferred from this one document.
 
+
+
+\## Real regression found and fixed: repeated\_transitions inverted the human/AI comparison
+
+Re-running compare\_corpora.py after the previous fix (exactly the
+
+follow-through the previous entry said was needed) found repeated\_transitions
+
+firing 31 times on human text and 0 times on AI text -- inverting the
+
+whole comparison from AI 2.85x human to AI 0.93x human. Root cause: fixed
+
+"3+ uses" threshold with no document-length scaling, unlike em\_dash\_density
+
+and boldface\_overuse which were already built as rate checks for exactly
+
+this reason. Fixed: threshold now scales as max(3, word\_count/500).
+
+Verified against the real essay (still fires) and a synthetic long
+
+document with the same natural repetition rate (no longer fires).
+
+New regression test locks this in. 89 tests passing.
+
+
+
+Still needs: re-running compare\_corpora.py and analyze\_confound.py
+
+again against this fix to get the real, current aggregate numbers --
+
+same "not yet done" item as before, now against corrected code instead
+
+of the buggy version.
+

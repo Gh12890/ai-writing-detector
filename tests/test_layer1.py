@@ -330,6 +330,19 @@ def test_repeated_transitions_not_triggered_by_two_uses():
     result = PatternScorer().analyze(text)
     assert not any(f.rule_id == "repeated_transitions" for f in result.flags)
 
+def test_repeated_transitions_scales_threshold_with_document_length():
+    long_doc = "The committee reviewed several proposals in detail. " * 200
+    long_doc += "However, the budget remained a concern throughout the process. "
+    long_doc += "Additional context was provided for each section under review. " * 200
+    long_doc += "However, further discussion was postponed to the next session. "
+    long_doc += "The report was circulated among all relevant departments. " * 200
+    long_doc += "However, no final decision was reached by the end of the meeting."
+    result = PatternScorer().analyze(long_doc)
+    assert not any(f.rule_id == "repeated_transitions" for f in result.flags), (
+        "Regression: repeated_transitions should not fire on ordinary "
+        "repetition rates in long documents, only on short-document overuse"
+    )
+
 
 def test_prose_tricolon_detected():
     text = "India's policy can be described as one of strategic autonomy, pragmatism, and national interest."

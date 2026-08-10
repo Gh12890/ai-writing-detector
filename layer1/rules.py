@@ -55,14 +55,26 @@ _TRANSITION_WORDS = [
 
 
 def _find_repeated_transitions(text: str) -> list[tuple[int, int, str]]:
+    # Real bug found on real data: a fixed threshold of "3+ uses anywhere"
+    # doesn't scale with document length. On the actual human corpus,
+    # this flagged 31 instances -- almost entirely concentrated in the
+    # two longest documents -- and inverted the whole human/AI
+    # comparison (AI rate went from 2.85x human to 0.93x). A long
+    # document naturally uses "however" or "therefore" a few times
+    # across many pages; that's not the same signal as a ~300-word
+    # essay using "therefore" 3 times, which is what this rule actually
+    # exists to catch. Scaling the threshold with word count fixes this
+    # the same way em_dash_density and boldface_overuse already avoid
+    # it -- by making this a rate check, not an absolute count.
+    word_count = len(text.split()) or 1
+    threshold = max(3, round(word_count / 500))
     results = []
     for word in _TRANSITION_WORDS:
         pattern = re.compile(rf"\b{word}\b", re.I)
         matches = list(pattern.finditer(text))
-        if len(matches) >= 3:
+        if len(matches) >= threshold:
             results.extend((m.start(), m.end(), m.group(0)) for m in matches)
     return results
-
 
 def _find_meta_summary(text: str) -> list[tuple[int, int, str]]:
     pattern = re.compile(
