@@ -27,23 +27,6 @@ class Rule:
     explanation: str
     finder: Callable[[str], list[tuple[int, int, str]]]
     use_original: bool = False
-    # "structural": syntax/formatting patterns (list structure, em dash
-    # rate, sentence-contrast shape). "lexical": specific word/phrase
-    # lists (ai_vocabulary, filler_phrase, etc.).
-    #
-    # This split exists because of a real, measured finding, not a
-    # guess: analyze_confound.py found a strong correlation (r=0.722)
-    # between flag density and average sentence length across the human
-    # corpus in FINDINGS.md -- and every one of those flags came from
-    # lexical rules. The two rules that survived testing against all 3
-    # AI models with zero human false positives (rule_of_three_outline,
-    # em_dash_density) never fired on a single human document, so they
-    # contributed nothing to that correlation. The confound currently
-    # measured is a lexical-rule problem, not evidence against
-    # structural rules -- but structural rules also haven't fired often
-    # enough yet to be proven clean either, just not yet caught doing
-    # the same thing. Treat "structural = safe" as a working hypothesis
-    # supported by current evidence, not a settled fact.
     tier: str = "lexical"
 
     def apply(self, text: str) -> list[Flag]:
@@ -58,10 +41,27 @@ def _find_chatbot_artifact(text: str) -> list[tuple[int, int, str]]:
         r"\b(if you (want|like|'d like),? I can (also )?(give|provide|walk|break|expand|show)"
         r"|let me know if"
         r"|I hope this helps"
-        r"|would you like me to)",
+        r"|would you like me to"
+        r"|sure\s*[,\u2014-]\s*here'?s)",
         re.I,
     )
     return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
+
+
+_TRANSITION_WORDS = [
+    "therefore", "however", "moreover", "furthermore", "additionally",
+    "consequently", "thus", "nevertheless", "nonetheless", "hence", "accordingly",
+]
+
+
+def _find_repeated_transitions(text: str) -> list[tuple[int, int, str]]:
+    results = []
+    for word in _TRANSITION_WORDS:
+        pattern = re.compile(rf"\b{word}\b", re.I)
+        matches = list(pattern.finditer(text))
+        if len(matches) >= 3:
+            results.extend((m.start(), m.end(), m.group(0)) for m in matches)
+    return results
 
 
 def _find_meta_summary(text: str) -> list[tuple[int, int, str]]:
@@ -96,6 +96,15 @@ def _find_rule_of_three_outline(text: str) -> list[tuple[int, int, str]]:
     if len(matches) < 3:
         return []
     return [(m.start(), m.end(), m.group(0)) for m in matches]
+
+
+def _find_prose_tricolon(text: str) -> list[tuple[int, int, str]]:
+    pattern = re.compile(
+        r"\b(characterized by|described as|defined by|marked by|typified by)\s+"
+        r"(one of\s+)?[\w\s]{2,25},\s*[\w\s]{2,25},?\s+and\s+[\w\s]{2,25}\b",
+        re.I,
+    )
+    return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
 
 
 def _find_filler_phrases(text: str) -> list[tuple[int, int, str]]:
@@ -308,4 +317,12 @@ REGISTRY: list[Rule] = [
     Rule("inline_header_list", "Inline-header vertical list",
          "Bullet opening with a bolded label and colon, common in AI-generated lists",
          _find_inline_header_list, tier="structural"),
+    Rule("repeated_transitions", "Repeated transition word",
+         "Same discourse marker (therefore, however, moreover...) used 3+ times, "
+         "an over-reliance-on-one-connective habit",
+         _find_repeated_transitions, tier="structural"),
+    Rule("prose_tricolon", "Prose-embedded tricolon",
+         "Three-item abstract list embedded in a sentence, introduced by a summary-framing verb "
+         "-- the prose form of rule_of_three_outline's numbered-list pattern",
+         _find_prose_tricolon, tier="structural"),
 ]

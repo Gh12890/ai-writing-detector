@@ -440,3 +440,69 @@ step, and it needs a human to actually click the checkbox and watch
 
 what happens -- same as every other piece of Layer 2 work so far.
 
+
+
+
+
+\## Real live miss found and fixed: essay explicitly prompted to sound AI
+
+Tested in the actual Streamlit app (not a synthetic example): a ChatGPT
+
+essay, explicitly asked to "sound more AI generated," scored as MORE
+
+human-like than either reference corpus's average, on both Layer 1 (2
+
+flags total) and Layer 2 (distance 0.3085 from 1.0, vs. corpus means of
+
+0.1193/0.1366). See FINDINGS.md for the full writeup.
+
+
+
+Three fixes shipped: chatbot\_artifact now catches "Sure, here's"/"Sure
+
+\-- here's"; new repeated\_transitions rule (3+ uses of the same
+
+discourse marker); new prose\_tricolon rule (rule-of-three lists
+
+embedded in prose, not just numbered lists -- closes the specific gap
+
+rule\_of\_three\_outline has had documented as unfixed since it was
+
+first built). Real result on the same essay: 2 flags become 7.
+
+
+
+Now 25 active scored rules (was 23): 21 from the SKILL.md's 24-pattern
+
+taxonomy + 4 original additions (meta\_summary\_framing,
+
+parallel\_bullet\_em\_dash, repeated\_transitions, prose\_tricolon).
+
+
+
+prose\_tricolon has a real, documented, accepted false-positive risk:
+
+it will also fire on legitimate human sentences shaped like "described
+
+as X, Y, and Z" that aren't AI-generated (e.g. "The store was described
+
+as small, clean, and well-organized") -- narrowing the pattern further
+
+would likely also cut real catches, so this is a deliberate tradeoff,
+
+not an oversight. Corpus measurement will show whether it's a practical
+
+problem as more human samples get tested.
+
+
+
+Not yet done: re-running compare\_corpora.py and analyze\_confound.py
+
+against the full corpus with these three new rules active. Every
+
+number in FINDINGS.md above the essay section was measured before this
+
+fix existed -- the real aggregate impact on the 2.85x gap is currently
+
+unknown, only inferred from this one document.
+

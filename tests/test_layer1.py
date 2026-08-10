@@ -6,10 +6,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from layer1 import PatternScorer
 
 MUMMY_TEXT = """Because in that final moment Imhotep understands something brutal about his whole story.
-At the end of The Mummy Returns, Rick is hanging over the pit and Evelyn risks her life to pull him up. Imhotep is in the same position and calls to Anck-su-namun to save him \u2014 but she runs instead. Then he looks at Rick and Evie, and he sees the contrast immediately:
+At the end of The Mummy Returns, Rick is hanging over the pit and Evelyn risks her life to pull him up. Imhotep is in the same position and calls to Anck-su-namun to save him — but she runs instead. Then he looks at Rick and Evie, and he sees the contrast immediately:
 
-* Rick and Evie's love is real and mutual \u2014 each is willing to die for the other.
-* Imhotep's love is not what he thought it was \u2014 he would have saved Anck-su-namun, but she would not save him.
+* Rick and Evie's love is real and mutual — each is willing to die for the other.
+* Imhotep's love is not what he thought it was — he would have saved Anck-su-namun, but she would not save him.
 
 So that little laugh / smile before he lets go is usually read as a mix of:
 
@@ -21,11 +21,9 @@ The man he hates, Rick, actually has the thing Imhotep thought he had: genuine l
 Once Anck-su-namun abandons him, Imhotep loses the main reason he came back. He stops fighting and just lets go.
 
 So the short answer is:
-He laughs because he suddenly sees the truth \u2014 Rick and Evie's love is real, his own isn't, and the whole thing has become tragically ironic. It's not a happy laugh. It's more of a broken, bitter realization right before he gives up.
+He laughs because he suddenly sees the truth — Rick and Evie's love is real, his own isn't, and the whole thing has become tragically ironic. It's not a happy laugh. It's more of a broken, bitter realization right before he gives up.
 If you want, I can also give you a scene-by-scene psychological breakdown of Imhotep in The Mummy and The Mummy Returns, because his ending is actually more tragic than it looks."""
 
-# A normal, informal, human note with none of the target patterns.
-# No detector is worth anything if it lights up on ordinary writing.
 HUMAN_CONTROL_TEXT = """ok so I watched the ending again last night. imhotep's little smile
 right before he falls always gets me. I think he just realizes anck-su-namun
 was never going to jump in after him like evie did for rick. kind of sad
@@ -54,14 +52,12 @@ def test_negative_parallelism_detected():
 
 
 def test_parallel_bullets_detected():
-    text = "* Love is real \u2014 they'd die for each other.\n* His love wasn't real \u2014 she ran."
+    text = "* Love is real — they'd die for each other.\n* His love wasn't real — she ran."
     result = PatternScorer().analyze(text)
     assert any(f.rule_id == "parallel_bullet_em_dash" for f in result.flags)
 
 
 def test_rule_of_three_outline_regression():
-    """This is the exact bug found live: the original regex only matched
-    2-word numbered headers and missed 'Recognition of betrayal' (3 words)."""
     text = "1. Recognition of betrayal\n2. Bitter irony\n3. Acceptance of defeat\n"
     result = PatternScorer().analyze(text)
     assert any(f.rule_id == "rule_of_three_outline" for f in result.flags), (
@@ -78,6 +74,8 @@ def test_filler_phrase_detected():
 def test_hedge_stacking_detected():
     result = PatternScorer().analyze("It could potentially be argued that this matters.")
     assert any(f.rule_id == "hedge_stacking" for f in result.flags)
+
+
 def test_promotional_language_detected():
     result = PatternScorer().analyze("This is a groundbreaking, revolutionary approach.")
     assert any(f.rule_id == "promotional_language" for f in result.flags)
@@ -111,6 +109,8 @@ def test_negative_parallelism_still_fires_on_curly_quoted_text():
     fired = {f.rule_id for f in result.flags}
     assert "negative_parallelism" in fired
     assert "curly_quotes" not in fired
+
+
 def test_emoji_detected():
     result = PatternScorer().analyze("This is great! \U0001F600 Really happy about it.")
     assert any(f.rule_id == "emoji" for f in result.flags)
@@ -134,6 +134,8 @@ def test_sycophantic_tone_detected():
 def test_knowledge_cutoff_disclaimer_detected():
     result = PatternScorer().analyze("As of my last update, I don't have access to real-time data.")
     assert any(f.rule_id == "knowledge_cutoff_disclaimer" for f in result.flags)
+
+
 def test_significance_inflation_detected():
     result = PatternScorer().analyze("This event stands as a testament to human perseverance.")
     assert any(f.rule_id == "significance_inflation" for f in result.flags)
@@ -158,6 +160,8 @@ def test_boldface_overuse_flagged():
 def test_no_boldface_no_false_positive():
     result = PatternScorer().analyze("This is a plain sentence with no bold formatting anywhere in it at all.")
     assert not any(f.rule_id == "boldface_overuse" for f in result.flags)
+
+
 def test_notability_emphasis_detected():
     result = PatternScorer().analyze("The startup has been featured in major publications worldwide.")
     assert any(f.rule_id == "notability_emphasis" for f in result.flags)
@@ -182,15 +186,14 @@ def test_inline_header_list_detected():
     result = PatternScorer().analyze("* **Speed:** the system responds quickly.\n* **Cost:** it is affordable.")
     assert any(f.rule_id == "inline_header_list" for f in result.flags)
 
+
 def test_em_dash_density_flagged():
-    text = "One \u2014 two \u2014 three \u2014 four \u2014 five \u2014 six words here total count."
+    text = "One — two — three — four — five — six words here total count."
     result = PatternScorer().analyze(text)
     assert any(f.rule_id == "em_dash_density" for f in result.flags)
 
 
 def test_mummy_passage_full_regression():
-    """Locks in the real result from the live run earlier in the
-    conversation: 5 distinct rule categories firing on this exact text."""
     result = PatternScorer().analyze(MUMMY_TEXT)
     fired_rules = {f.rule_id for f in result.flags}
     expected = {
@@ -205,15 +208,14 @@ def test_mummy_passage_full_regression():
 
 
 def test_human_control_low_false_positives():
-    """Ordinary informal human writing should not light up like a machine
-    draft. Zero tolerance isn't realistic for a regex layer, but it should
-    stay well below the Mummy passage's density."""
     result = PatternScorer().analyze(HUMAN_CONTROL_TEXT)
     assert result.flag_count <= 1, f"Too many false positives on human control: {result.flags}"
+
+
 REAL_PASTED_TEXT_WITH_MARKDOWN_AND_SMART_QUOTES = """Because in that final moment **Imhotep understands something brutal about his whole story**.
-At the end of *The Mummy Returns*, Rick is hanging over the pit and **Evelyn risks her life to pull him up**. Imhotep is in the same position and calls to **Anck-su-namun** to save him \u2014 but **she runs instead**. Then he looks at Rick and Evie, and he sees the contrast immediately:
-* **Rick and Evie\u2019s love is real and mutual** \u2014 each is willing to die for the other.
-* **Imhotep\u2019s love is not what he thought it was** \u2014 he would have saved Anck-su-namun, but she would not save him.
+At the end of *The Mummy Returns*, Rick is hanging over the pit and **Evelyn risks her life to pull him up**. Imhotep is in the same position and calls to **Anck-su-namun** to save him — but **she runs instead**. Then he looks at Rick and Evie, and he sees the contrast immediately:
+* **Rick and Evie's love is real and mutual** — each is willing to die for the other.
+* **Imhotep's love is not what he thought it was** — he would have saved Anck-su-namun, but she would not save him.
 So that little laugh / smile before he lets go is usually read as a mix of:
 1. **Recognition of betrayal**
    He realizes Anck-su-namun never loved him the way he loved her.
@@ -222,21 +224,18 @@ So that little laugh / smile before he lets go is usually read as a mix of:
 3. **Acceptance of defeat**
    Once Anck-su-namun abandons him, Imhotep loses the main reason he came back. He stops fighting and just lets go.
 So the short answer is:
-**He laughs because he suddenly sees the truth \u2014 Rick and Evie\u2019s love is real, his own isn\u2019t, and the whole thing has become tragically ironic.** It\u2019s not a happy laugh. It\u2019s more of a **broken, bitter realization** right before he gives up.
+**He laughs because he suddenly sees the truth — Rick and Evie's love is real, his own isn't, and the whole thing has become tragically ironic.** It's not a happy laugh. It's more of a **broken, bitter realization** right before he gives up.
 If you want, I can also give you a **scene-by-scene psychological breakdown of Imhotep in *The Mummy* and *The Mummy Returns***, because his ending is actually more tragic than it looks."""
 
 
 def test_real_pasted_text_regression():
-    """This is the exact text a real paste broke Layer 1 with: curly
-    apostrophes killed negative_parallelism, and markdown ** wrapping the
-    numbered-list titles killed rule_of_three_outline. Both are fixed;
-    this locks the fix in against the exact input that exposed the bugs."""
     result = PatternScorer().analyze(REAL_PASTED_TEXT_WITH_MARKDOWN_AND_SMART_QUOTES)
     fired_rules = {f.rule_id for f in result.flags}
     assert "negative_parallelism" in fired_rules, "Smart-quote regression: negative_parallelism should still fire"
     assert "rule_of_three_outline" in fired_rules, "Markdown regression: rule_of_three_outline should still fire"
     rule_of_three_count = sum(1 for f in result.flags if f.rule_id == "rule_of_three_outline")
     assert rule_of_three_count == 3, f"Expected all 3 numbered items to fire, got {rule_of_three_count}"
+
 
 def test_mask_excluded_blanks_out_span():
     from layer1.scorer import _mask_excluded
@@ -252,7 +251,7 @@ def test_mask_excluded_no_spans_returns_unchanged():
 
 def test_em_dash_inside_citation_does_not_trigger_document_flag():
     text = (
-        "Section 5 of the Model Act \u2014 Amendment \u2014 Title \u2014 Provisions Act, 2020 "
+        "Section 5 of the Model Act — Amendment — Title — Provisions Act, 2020 "
         "governs this narrow procedural matter for the parties involved today."
     )
     result = PatternScorer().analyze(text)
@@ -262,11 +261,13 @@ def test_em_dash_inside_citation_does_not_trigger_document_flag():
 
 def test_em_dash_outside_citation_still_triggers_document_flag():
     text = (
-        "This is a short sentence \u2014 with an em dash \u2014 and another "
-        "\u2014 right here \u2014 too, plainly."
+        "This is a short sentence — with an em dash — and another "
+        "— right here — too, plainly."
     )
     result = PatternScorer().analyze(text)
     assert any(f.rule_id == "em_dash_density" for f in result.flags)
+
+
 def test_flags_by_tier_splits_correctly():
     text = (
         "This groundbreaking approach serves as a testament to innovation.\n\n"
@@ -295,7 +296,7 @@ def test_tier_densities_computed_independently():
 
 
 def test_em_dash_density_and_boldface_overuse_tagged_structural():
-    text = "One \u2014 two \u2014 three \u2014 four \u2014 five \u2014 six words here total count."
+    text = "One — two — three — four — five — six words here total count."
     result = PatternScorer().analyze(text)
     by_tier = result.flags_by_tier()
     assert any(f.rule_id == "em_dash_density" for f in by_tier["structural"])
@@ -307,10 +308,63 @@ def test_no_flags_gives_zero_tier_densities():
     assert result.structural_density_per_1000w == 0.0
     assert result.lexical_density_per_1000w == 0.0
 
+
+def test_chatbot_artifact_catches_sure_heres_em_dash():
+    result = PatternScorer().analyze("Sure — here's a deliberately very AI-sounding version.")
+    assert any(f.rule_id == "chatbot_artifact" for f in result.flags)
+
+
+def test_chatbot_artifact_catches_sure_heres_comma():
+    result = PatternScorer().analyze("Sure, here's the summary you asked for.")
+    assert any(f.rule_id == "chatbot_artifact" for f in result.flags)
+
+
+def test_repeated_transitions_detected():
+    text = "Therefore, this matters. The weather was nice. Therefore, that also matters. Therefore, we conclude it does."
+    result = PatternScorer().analyze(text)
+    assert any(f.rule_id == "repeated_transitions" for f in result.flags)
+
+
+def test_repeated_transitions_not_triggered_by_two_uses():
+    text = "Therefore, this matters. The weather was nice. It rained later that day."
+    result = PatternScorer().analyze(text)
+    assert not any(f.rule_id == "repeated_transitions" for f in result.flags)
+
+
+def test_prose_tricolon_detected():
+    text = "India's policy can be described as one of strategic autonomy, pragmatism, and national interest."
+    result = PatternScorer().analyze(text)
+    assert any(f.rule_id == "prose_tricolon" for f in result.flags)
+
+
+def test_prose_tricolon_not_triggered_without_framing_verb():
+    text = "I bought bread, milk, and eggs at the store today."
+    result = PatternScorer().analyze(text)
+    assert not any(f.rule_id == "prose_tricolon" for f in result.flags)
+
+
+REAL_AI_ESSAY_INDIA_US_IRAN = """Sure — here's a deliberately very AI-sounding version, with formal wording, repetitive transitions, and textbook-style phrasing:
+India–US–Iran Relationship
+The relationship between India, the United States, and Iran is a significant and complex aspect of contemporary international relations. These three countries have different strategic interests, yet India maintains important relations with both the United States and Iran. Therefore, India has to follow a balanced and pragmatic foreign policy.
+
+India and the United States have developed a strong and comprehensive strategic partnership. Their cooperation includes areas such as defence, trade, technology, energy, and regional security. The United States considers India an important partner in the Indo-Pacific region. At the same time, India benefits from cooperation with the United States in economic, technological, and strategic fields.
+
+On the other hand, Iran is also important for India because of geographical, economic, and strategic reasons. India has historical and cultural relations with Iran. The Chabahar Port in Iran is particularly important for India because it provides connectivity with Afghanistan and Central Asia. Iran has also been an important source of energy for India.
+
+However, India's relationship with Iran is complicated by the tensions between Iran and the United States. American sanctions on Iran can create difficulties for Indian businesses and energy interests. India therefore has to carefully manage its relations with both countries. India generally avoids taking extreme positions and instead focuses on its national interests.
+
+In conclusion, the India–US–Iran relationship represents the complexity of modern international diplomacy. India's policy can be described as one of strategic autonomy, pragmatism, and national interest. India seeks to maintain friendly relations with the United States while continuing its important engagement with Iran. Therefore, balancing these relationships is an important challenge as well as an opportunity for India's foreign policy."""
+
+
+def test_real_ai_essay_regression_all_three_new_rules_fire():
+    result = PatternScorer().analyze(REAL_AI_ESSAY_INDIA_US_IRAN)
+    fired = {f.rule_id for f in result.flags}
+    assert "chatbot_artifact" in fired, "Missed the 'Sure -- here's' preamble"
+    assert "repeated_transitions" in fired, "Missed the 3x 'therefore' repetition"
+    assert "prose_tricolon" in fired, "Missed the 'described as one of X, Y, and Z' tricolon"
+    assert result.flag_count >= 4
+
+
 def test_legal_boilerplate_not_over_flagged():
-    """Formulaic legal citation language should not trip the same rules as
-    chatbot-style AI writing. This isn't the exclusion filter from the
-    design doc (that's separate work) -- it's a check that Layer 1's
-    *current* rules don't already misfire on this domain."""
     result = PatternScorer().analyze(LEGAL_BOILERPLATE_TEXT)
     assert result.flag_count == 0, f"Unexpected flags on legal boilerplate: {result.flags}"
