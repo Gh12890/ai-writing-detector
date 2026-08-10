@@ -402,3 +402,101 @@ privacy of this material, deliberately expanding that specific category
 
 in the corpus is not a direction this project intends to pursue.
 
+
+
+\## A second real essay, the reverse pattern: Layer 2 carries the signal this time, not Layer 1
+
+
+
+A second ChatGPT-generated essay (Donald Trump's impact on U.S.
+
+politics, \~545 tokens) tested the same way as the India-US-Iran essay.
+
+Results:
+
+
+
+|                                    | Layer 1                                    | Layer 2 (full-document) |
+
+|------------------------------------|---------------------------------------------|----------------------------|
+
+| This essay                        | 2 flags (0 structural, 2 lexical: vague\_attribution, meta\_summary\_framing) | distance 0.1174 |
+
+| India-US-Iran essay (after fixes) | 7 flags (5 structural, 2 lexical)          | distance 0.2670 |
+
+| Human corpus mean                 | --                                          | 0.1193 (sample05 excluded) |
+
+| AI corpus mean                    | --                                          | 0.1366 |
+
+
+
+\*\*This essay's Layer 2 score (0.1174) is lower than both the human
+
+mean (0.1193) AND the AI mean (0.1366)\*\* -- reading as more
+
+machine-like than the average confirmed-AI document in the whole
+
+corpus. Layer 1, on the same essay, is comparatively weak: two genuine
+
+lexical catches, nothing structural. repeated\_transitions and
+
+prose\_tricolon correctly stayed silent -- "therefore" only appears
+
+twice (below the minimum count of 3 regardless of rate), and nothing
+
+matches prose\_tricolon's five anchored framing verbs. Not a bug on
+
+either rule; the essay genuinely doesn't contain those specific forms.
+
+
+
+\*\*This is the reverse of what happened on the India-US-Iran essay\*\*,
+
+where Layer 1 carried the signal (7 flags, largely structural) and
+
+Layer 2 stayed flat and human-reading (0.2670, above both corpus
+
+means). Here, Layer 2 carries the signal and Layer 1 is comparatively
+
+quiet. Across the two real AI essays tested so far, each layer has
+
+been the stronger signal exactly once. Neither layer is consistently
+
+better -- which is the actual argument for showing both scores rather
+
+than either alone, now demonstrated on two independent real documents
+
+instead of asserted as a design principle.
+
+
+
+\*\*A real Layer 1 gap surfaced by this essay, not yet built:\*\* the
+
+essay's introduction and conclusion each list the same \~5 items
+
+("political communication, political policies, political parties,
+
+elections, and American society in general" / "political
+
+communication, the Republican Party, political polarization,
+
+elections, and public attitudes toward government and democracy") --
+
+a near-verbatim restated enumeration, a recognizable formulaic-essay
+
+habit distinct from anything currently built. Not rule\_of\_three\_outline
+
+(not a numbered list), not prose\_tricolon (five items, not three, no
+
+anchoring framing verb, and the pattern is the repetition between
+
+intro and conclusion, not the list itself). Logged here as a candidate
+
+for future work, not built tonight -- this project's rate on new rules
+
+tonight was one real two-iteration regression per rule added, and
+
+that's reason enough to not add a fourth without deliberate, separate
+
+testing.
+
