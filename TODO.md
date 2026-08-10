@@ -574,3 +574,35 @@ analyze\_confound.py one more time against this second fix -- same
 
 open item as before, now for the third time on this specific rule.
 
+
+
+\## repeated\_transitions regression: fully resolved, confirmed by re-running the real comparison
+
+Third measurement against this specific rule confirms the second fix
+
+(7.0/1000w) is correct: 0 hits on human, 0 hits on AI, total corpus
+
+numbers now numerically identical to the pre-regression baseline
+
+(15 human / 19 AI / 2.85x, matching to the decimal). Structural
+
+correlation back to None (no variance).
+
+
+
+Honest caveat, not yet resolved: repeated\_transitions and prose\_tricolon
+
+have each fired on exactly one document across this whole project --
+
+the adversarial essay they were built for. Zero hits on the real
+
+ai\_corpus/ (7 documents). Safe (no false positives) but unproven at
+
+scale. Whether the current AI corpus just doesn't exhibit this pattern,
+
+or whether 7.0/1000w is calibrated too conservatively to catch a
+
+subtler real version of it, is unknown -- would need more AI samples,
+
+deliberately varied in prompting style, to find out.
+

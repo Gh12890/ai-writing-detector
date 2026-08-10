@@ -498,3 +498,73 @@ see what the real data says, rather than trust the reasoning alone a
 
 third time.
 
+
+
+\## Regression fully resolved -- but with an honest asterisk
+
+
+
+Re-running compare\_corpora.py against the second fix (7.0/1000w rate
+
+threshold) confirms it's fully fixed, not just improved: repeated\_transitions
+
+no longer appears in the rule breakdown at all -- zero hits on human,
+
+zero on AI. Total flags, per-corpus, are now numerically identical to
+
+the very first measurement in this document, before any of the three
+
+new rules (chatbot\_artifact's "Sure, here's" addition,
+
+repeated\_transitions, prose\_tricolon) existed: 15 human flags, 19 AI
+
+flags, 2.85x ratio, to the decimal. Structural correlation with
+
+sentence length is back to None (no variance -- nothing fired).
+
+
+
+\*\*The honest asterisk:\*\* repeated\_transitions and prose\_tricolon have
+
+now fired on exactly one document in this entire project -- the
+
+adversarial essay they were built to catch. Zero hits on any of the 13
+
+corpus documents (6 human, 7 AI), including the AI side. The 7.0/1000w
+
+threshold that stopped the false positives is also, apparently,
+
+conservative enough that it doesn't fire on any of the real AI samples
+
+either. That's a real, different claim than "these rules work": they're
+
+currently validated against one hand-picked adversarial case, not shown
+
+to generalize to this project's actual AI corpus at all. Whether that's
+
+because the current ai\_corpus/ documents genuinely don't exhibit this
+
+pattern, or because the threshold is calibrated too conservatively to
+
+catch a real but subtler version of it, is an open question -- more AI
+
+samples, deliberately varied in how they're prompted (report-style vs.
+
+essay-style vs. explicitly-asked-to-sound-AI, the way this one was),
+
+would be the way to find out.
+
+
+
+\*\*Net honest state of this whole multi-turn detour:\*\* a real bug was
+
+found, diagnosed correctly, and fixed in two iterations, each verified
+
+against real data rather than assumed correct after the first attempt.
+
+The original 2.85x finding survives, unchanged. Two new rules exist,
+
+are tested, and are currently safe (no false positives) but unproven at
+
+scale (one confirmed catch, zero corpus-wide signal either direction).
+
