@@ -540,3 +540,37 @@ same "not yet done" item as before, now against corrected code instead
 
 of the buggy version.
 
+
+
+
+
+\## repeated\_transitions fix, take two -- the first fix was insufficient
+
+Re-running compare\_corpora.py against the length-scaled fix showed real
+
+but incomplete improvement (31 -> 22 human false positives, ratio only
+
+recovered to 1.16x vs the original 2.85x). Root cause of the shortfall:
+
+the length scaling worked out to a constant 2.0/1000w target rate,
+
+against a confirmed real case running at 10.3/1000w -- correct
+
+direction, wrong magnitude. Replaced with an explicit rate threshold
+
+(7.0/1000w, min count 3), with a new regression test specifically
+
+covering the scenario that exposed the first fix's gap (14 uses across
+
+\~6000 words). 90 tests passing.
+
+
+
+7.0/1000w is a reasoned choice, not yet independently validated against
+
+the real corpus. Still needs: re-run compare\_corpora.py and
+
+analyze\_confound.py one more time against this second fix -- same
+
+open item as before, now for the third time on this specific rule.
+

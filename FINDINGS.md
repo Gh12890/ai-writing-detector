@@ -424,3 +424,77 @@ once compare\_corpora.py and analyze\_confound.py are re-run against
 
 the fixed rule.
 
+
+
+
+
+\## The repeated\_transitions fix needed a second iteration -- the first one wasn't enough
+
+
+
+Re-running compare\_corpora.py against the "fixed" rule (the length-scaling
+
+change described above) showed real improvement -- human flags from this
+
+rule dropped from 31 to 22 -- but not a real fix. repeated\_transitions
+
+was still the largest single contributor to human flags (22 of 37, 59%),
+
+still driven by sample03, and the aggregate AI/human ratio only
+
+recovered to 1.16x, far short of the 2.85x measured before either bug
+
+existed.
+
+
+
+\*\*Why the first fix was insufficient, worked out precisely:\*\* threshold
+
+= word\_count / 500 is mathematically equivalent to a CONSTANT target
+
+rate of exactly 2.0 occurrences per 1000 words, for any document long
+
+enough that the max(3, ...) floor doesn't bind. The one confirmed
+
+genuine case -- the AI essay, 3 uses of "therefore" in 291 words -- has
+
+an actual rate of 10.3 per 1000 words. The first fix set the bar at
+
+roughly a fifth of that. It was scaled in the right direction, just by
+
+far too little.
+
+
+
+\*\*Second fix:\*\* replaced the length-scaled count with an explicit rate
+
+threshold (7.0 per 1000 words, plus a minimum absolute count of 3) --
+
+real margin below the confirmed genuine case's 10.3, and well above the
+
+2.0 that just proved too weak on real data. Verified against three
+
+cases: the real essay (still fires, 10.3/1000w), the original synthetic
+
+long document (still doesn't fire), and a new stress test specifically
+
+built to match the scenario that got through the first fix -- 14 uses
+
+of "however" across \~6,000 words, a rate of 2.3/1000w, which the first
+
+fix would have let through and the second correctly doesn't.
+
+
+
+\*\*Still not independently validated at this exact number (7.0/1000w)
+
+against the real corpus\*\* -- chosen with a reasoned margin, not
+
+measured. The honest next step is the same one that caught both bugs
+
+so far: re-run compare\_corpora.py and analyze\_confound.py again and
+
+see what the real data says, rather than trust the reasoning alone a
+
+third time.
+

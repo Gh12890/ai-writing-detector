@@ -343,6 +343,17 @@ def test_repeated_transitions_scales_threshold_with_document_length():
         "repetition rates in long documents, only on short-document overuse"
     )
 
+def test_repeated_transitions_first_fix_was_insufficient_second_fix_holds():
+    stress_doc = "This section discusses the relevant background information in detail. " * 100
+    for i in range(14):
+        stress_doc += f"However, point number {i} requires further consideration. "
+        stress_doc += "This section discusses the relevant background information in detail. " * 40
+    result = PatternScorer().analyze(stress_doc)
+    assert not any(f.rule_id == "repeated_transitions" for f in result.flags), (
+        "Regression: the first length-scaling fix let this exact pattern "
+        "through (14 uses / ~6000 words); the rate-based fix must not."
+    )
+
 
 def test_prose_tricolon_detected():
     text = "India's policy can be described as one of strategic autonomy, pragmatism, and national interest."

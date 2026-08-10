@@ -55,26 +55,32 @@ _TRANSITION_WORDS = [
 
 
 def _find_repeated_transitions(text: str) -> list[tuple[int, int, str]]:
-    # Real bug found on real data: a fixed threshold of "3+ uses anywhere"
-    # doesn't scale with document length. On the actual human corpus,
-    # this flagged 31 instances -- almost entirely concentrated in the
-    # two longest documents -- and inverted the whole human/AI
-    # comparison (AI rate went from 2.85x human to 0.93x). A long
-    # document naturally uses "however" or "therefore" a few times
-    # across many pages; that's not the same signal as a ~300-word
-    # essay using "therefore" 3 times, which is what this rule actually
-    # exists to catch. Scaling the threshold with word count fixes this
-    # the same way em_dash_density and boldface_overuse already avoid
-    # it -- by making this a rate check, not an absolute count.
+    # Second iteration on this rule -- the first fix (threshold =
+    # word_count/500) was still wrong, just wrong by less. That divisor
+    # works out to a CONSTANT target rate of only 2.0 per 1000 words for
+    # any sufficiently long document -- and re-running compare_corpora.py
+    # against the real corpus showed that's still too weak: sample03
+    # (~7100 words) kept triggering, still driving 22 of 37 total human
+    # flags. The one confirmed genuine case (the AI essay: 3 uses of
+    # "therefore" in 291 words) has an actual rate of 10.3 per 1000
+    # words. This threshold is set at 7.0/1000w -- real margin below the
+    # confirmed case, and well above the 2.0/1000w that already proved
+    # too weak. Still a deliberate, conservative choice, not
+    # independently validated at this exact number -- re-check against
+    # the real corpus again after this change, same as every other
+    # threshold in this project.
     word_count = len(text.split()) or 1
-    threshold = max(3, round(word_count / 500))
+    MIN_COUNT = 3
+    RATE_THRESHOLD_PER_1000W = 7.0
     results = []
     for word in _TRANSITION_WORDS:
         pattern = re.compile(rf"\b{word}\b", re.I)
         matches = list(pattern.finditer(text))
-        if len(matches) >= threshold:
+        rate = len(matches) / word_count * 1000
+        if len(matches) >= MIN_COUNT and rate >= RATE_THRESHOLD_PER_1000W:
             results.extend((m.start(), m.end(), m.group(0)) for m in matches)
     return results
+
 
 def _find_meta_summary(text: str) -> list[tuple[int, int, str]]:
     pattern = re.compile(
