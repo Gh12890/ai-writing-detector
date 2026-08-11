@@ -568,3 +568,103 @@ are tested, and are currently safe (no false positives) but unproven at
 
 scale (one confirmed catch, zero corpus-wide signal either direction).
 
+
+
+
+
+\---
+
+
+
+\## Addendum (2026-08-11): Corpus Expansion and a Confound Worth Watching
+
+
+
+The corpus composition changed in two ways since the original analysis above, and
+
+they happened together, not separately -- this addendum's numbers are NOT a clean
+
+before/after comparison against the original 2.85x figure.
+
+
+
+\*\*Change 1:\*\* Two files from each class (sample01, sample06 human; sample07, sample12
+
+AI) were moved to a held-out test set (see SPLIT.md) and are excluded from all
+
+corpus-comparison numbers going forward, including below.
+
+
+
+\*\*Change 2:\*\* Two new human documents were added to the human corpus:
+
+\- sample14.txt (5,390 words) -- political history, formal/academic register
+
+\- sample15.txt (403 words) -- political history, formal/academic register
+
+
+
+Current aggregate (6 human docs incl. sample14/15, 5 AI docs, held-out files excluded
+
+from both sides):
+
+
+
+&#x20;   Human: 21,031 words, 14 flags, 0.67 flags/1000w
+
+&#x20;   AI:     4,854 words, 15 flags, 3.09 flags/1000w
+
+&#x20;   AI rate is 4.61x the human rate
+
+
+
+This ratio is not directly comparable to the original 2.85x -- both the held-out
+
+removal and the new additions changed the denominator simultaneously.
+
+
+
+\*\*The finding that matters:\*\* sample14 and sample15, scored individually, produced
+
+zero flags each across all 25 rules. Together they contribute 5,793 words -- over a
+
+quarter of the human corpus -- with no flags at all, which is the primary driver of
+
+the lower aggregate human rate above.
+
+
+
+At n=2, this doesn't distinguish between two different explanations, and no claim
+
+stronger than "zero flags observed" is supported yet:
+
+1\. The rule set is well-calibrated against formal/academic prose specifically, or
+
+2\. Formal/academic writing structurally lacks the surface patterns (filler phrases,
+
+&#x20;  copula avoidance, promotional language, etc.) these rules were built to detect,
+
+&#x20;  independent of whether a document is AI-generated -- meaning this register may be
+
+&#x20;  under-tested rather than validated.
+
+
+
+Worth flagging explicitly: this sits in tension with the formality confound already
+
+documented above (r=0.722 between flag density and average sentence length on
+
+confirmed human text). That earlier finding showed lexical-tier rules firing MORE on
+
+longer, more formal human sentences; sample14/15 -- both long and formal -- fired
+
+NONE. Both observations are real; they are not yet reconciled. A larger sample of
+
+formal/academic human writing would be needed to determine which pattern dominates
+
+at scale, or whether both are true under different sub-conditions not yet identified.
+
+
+
+No rule thresholds or exclusion filters were modified in response to this data.
+
