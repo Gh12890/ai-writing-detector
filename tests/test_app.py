@@ -11,6 +11,12 @@ def test_app_loads_without_error():
     at.run()
     assert not at.exception
 
+def test_deployment_warning_always_visible():
+    at = AppTest.from_file("../app.py")
+    at.run()
+    assert not at.exception
+    warning_texts = [w.value for w in at.warning]
+    assert any("hosted version" in w for w in warning_texts)
 
 def test_run_analysis_shows_flags():
     at = AppTest.from_file("../app.py")
@@ -45,8 +51,8 @@ def test_empty_input_shows_warning():
     at.button[0].click()
     at.run()
     assert not at.exception
-    assert len(at.warning) == 1
-
+    warning_texts = [w.value for w in at.warning]
+    assert any("Paste some text first" in w for w in warning_texts)
 
 def test_structural_and_lexical_sections_both_render():
     at = AppTest.from_file("../app.py")
