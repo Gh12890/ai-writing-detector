@@ -18,7 +18,14 @@ st.info(
     "Layer 2 number: it's small-sample, unvalidated, and one of its two "
     "scoring methods was tested and found not to help."
 )
-
+st.warning(
+    "If you're using the hosted version of this app (not running it locally "
+    "or in Colab), Layer 2 and Layer 3 may fail or crash the app entirely due "
+    "to free-tier memory limits -- two 1.5B-parameter models don't reliably "
+    "fit. For real Layer 2/3 results, see LAYER2_FINDINGS.md, "
+    "HUMANIZER_FINDINGS.md, and LAYER3_FINDINGS.md in the repo, which contain "
+    "actual measured results from local/GPU runs."
+)
 text = st.text_area("Paste text to analyze", height=250, key="input_text")
 run_layer2 = st.checkbox(
     "Also run Layer 2 (statistical scorer) -- slow, downloads models on first use"
@@ -116,6 +123,9 @@ if run_clicked:
                     st.write(f"**Rule:** {flag.rule_name}")
                     st.write(f"**Why flagged:** {flag.explanation}")
 
+        observer = performer = tok = device = None
+        truncated_score = None
+
         if run_layer2:
             st.subheader("Layer 2: statistical scorer")
             try:
@@ -159,3 +169,68 @@ if run_clicked:
                     "model weights the first time), or insufficient memory for two "
                     "1.5B-parameter models on CPU."
                 )
+
+        run_layer3 = st.checkbox(
+            "Also check detection robustness (Layer 3) -- runs a local paraphrase "
+            "attack and re-scores the result. SLOW on CPU: expect several minutes, "
+            "not seconds, even for short text. Requires Layer 2 checked above."
+        )
+
+        if run_layer3:
+            if not run_layer2 or observer is None:
+                st.warning("Check the Layer 2 box above first -- Layer 3 reuses those models.")
+            else:
+                st.subheader("Layer 3: detection robustness check")
+                st.caption(
+                    "This is NOT a tool to help evade detection. It exists to answer one "
+                    "question honestly: if this text is flagged, how much does that verdict "
+                    "survive a cheap, automated paraphrase? A local, free, ~1.5B-parameter "
+                    "model performs the paraphrase -- a much weaker attack than a commercial "
+                    "humanizer (see HUMANIZER_FINDINGS.md for real Quillbot-based numbers). "
+                    "On this project's own test data, results were inconsistent: sometimes "
+                    "the paraphrase reduced flags, sometimes it increased them (see "
+                    "LAYER3_FINDINGS.md). Treat any single result below as one data point, "
+                    "not a reliable prediction."
+                )
+                try:
+                    from layer3_adversarial import chunked_paraphrase
+                    from layer2_binoculars import binoculars_score
+
+                    with st.spinner(
+                        "Generating local paraphrase attack (CPU -- this may take "
+                        "several minutes)..."
+                    ):
+                        paraphrase = chunked_paraphrase(text, performer, tok, device)
+
+                    para_result = PatternScorer().analyze(paraphrase)
+
+                    l3col1, l3col2 = st.columns(2)
+                    l3col1.metric("Original flags", result.flag_count)
+                    l3col2.metric("Post-paraphrase flags", para_result.flag_count)
+
+                    word_ratio = (
+                        para_result.word_count / result.word_count
+                        if result.word_count else 0
+                    )
+                    st.caption(
+                        f"Paraphrase word count: {para_result.word_count} "
+                        f"(original: {result.word_count}, ratio: {word_ratio:.2f}). "
+                        f"Ratios well below ~0.7 mean the model compressed rather than "
+                        f"paraphrased -- treat the flag comparison above as less reliable "
+                        f"if so."
+                    )
+
+                    with st.spinner("Scoring paraphrase with Layer 2..."):
+                        para_binoculars = binoculars_score(
+                            paraphrase, observer, performer, tok, device
+                        )
+
+                    if truncated_score is not None:
+                        l3col1.metric("Original Binoculars", f"{truncated_score:.4f}")
+                    l3col2.metric("Post-paraphrase Binoculars", f"{para_binoculars:.4f}")
+
+                    with st.expander("View generated paraphrase (diagnostic only)"):
+                        st.write(paraphrase)
+
+                except Exception as e:
+                    st.error(f"Layer 3 failed to run: {e}")
