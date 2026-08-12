@@ -134,12 +134,34 @@ in opposite directions, at least for this rule set. n=3 is not enough
 to confirm this; it is a hypothesis this result motivates, not a
 finding it establishes.
 
+### Held-Out Results (Final, n=2 -- sample09, sample13)
+
+Per SPLIT.md's second held-out designation, these two files were reserved
+for a single final evaluation of the Claude API attacker specifically and
+have now been used. No further tuning or re-testing of these documents is
+valid after this point.
+
+| Document | Flags (orig -> para) | Rules | Word ratio | Direction |
+|---|---|---|---|---|
+| sample09 | 1 -> 1 | em_dash_density (survived) | 1.13 | no change |
+| sample13 | 3 -> 4 | ai_vocabulary, em_dash_density, promotional_language (all survived, one fired an extra time) | 1.14 | attack backfired |
+
+**Result: confirms the train/dev pattern, does not contradict it.** Unlike
+the local-model attacker, which reversed direction between train/dev
+(2 of 3 "worked") and held-out (2 of 2 backfired), the Claude API attacker
+shows the same pattern in both sets: it never reduced flag count on any
+of the five documents tested (3 train/dev + 2 held-out), and increased it
+on three of the five. This is a more consistent finding than anything
+produced with the local model, though five documents total is still a
+small sample -- the direction is consistent, the sample size is not yet
+large enough to treat this as settled.
+
+Worth noting plainly: both held-out ratios (1.13, 1.14) ran higher than
+any train/dev ratio (1.02, 1.01, 0.99) -- Claude expanded these two
+documents rather than preserving length near-exactly. Not treated as a
+problem here, but noted rather than smoothed over, since it's a real
+variation from the train/dev pattern on this specific metric.
+
 ### Not yet done
-- Not run against the held-out test set. The original held-out pair
-  (sample07, sample12) is now reserved to the local-model attacker only
-  -- reusing it here would compromise it as an unbiased test for a
-  second, different attacker. A separate held-out pair (sample09,
-  sample13) has been designated for the Claude API attacker
-  specifically -- see SPLIT.md's second held-out section.
 - No rule thresholds or exclusion filters were changed in response to
   any result in this section.

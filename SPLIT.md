@@ -41,3 +41,7 @@ was judged to be working.
 
 Same rule as before: these two files are used once, for a single final
 evaluation, no tuning in response to the result.
+
+**Status: used.** Final evaluation run 2026-08-12. Results in LAYER3_FINDINGS.md.
+No further tuning or re-testing of sample09/sample13 is valid under this
+methodology going forward.
