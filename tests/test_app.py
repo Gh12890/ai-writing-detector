@@ -78,3 +78,65 @@ def test_structural_and_lexical_sections_both_render():
     headers = [h.value for h in at.subheader]
     assert any("Structural flags (3)" in h for h in headers)
     assert any("Lexical flags (3)" in h for h in headers)
+def test_density_zone_boundaries():
+    from app import density_zone
+
+    assert density_zone(0.0) == ("Low", "gray")
+    assert density_zone(0.67) == ("Low", "gray")
+    assert density_zone(0.68) == ("Elevated", "badge-elevated")
+    assert density_zone(3.0) == ("Elevated", "badge-elevated")
+    assert density_zone(3.09) == ("High", "badge-high")
+    assert density_zone(10.0) == ("High", "badge-high")
+
+
+def test_density_badges_render_low_for_plain_text():
+    at = AppTest.from_file("../app.py")
+    at.run()
+    at.text_area(key="input_text").input(
+        "The cat sat quietly on the warm windowsill each afternoon, "
+        "watching the birds outside."
+    )
+    at.button[0].click()
+    at.run()
+    assert not at.exception
+    markdown_texts = [m.value for m in at.markdown]
+    assert any("Structural pattern density: Low" in m for m in markdown_texts)
+    assert any("Lexical pattern density: Low" in m for m in markdown_texts)
+
+
+def test_density_badges_render_high_for_flag_heavy_text():
+    at = AppTest.from_file("../app.py")
+    at.run()
+    at.text_area(key="input_text").input(
+        "This groundbreaking approach serves as a testament to innovation.\n\n"
+        "1. First Point\n2. Second Point\n3. Third Point"
+    )
+    at.button[0].click()
+    at.run()
+    assert not at.exception
+    markdown_texts = [m.value for m in at.markdown]
+    assert any("Structural pattern density: High" in m for m in markdown_texts)
+    assert any("Lexical pattern density: High" in m for m in markdown_texts)
+def test_density_percent_boundaries():
+    from app import density_percent
+
+    assert density_percent(0.0) == 0
+    assert density_percent(0.67) == 0
+    assert density_percent(1.88) == 50
+    assert density_percent(3.09) == 100
+    assert density_percent(10.0) == 100
+
+
+def test_density_percent_shown_in_badges():
+    at = AppTest.from_file("../app.py")
+    at.run()
+    at.text_area(key="input_text").input(
+        "This groundbreaking approach serves as a testament to innovation.\n\n"
+        "1. First Point\n2. Second Point\n3. Third Point"
+    )
+    at.button[0].click()
+    at.run()
+    assert not at.exception
+    markdown_texts = [m.value for m in at.markdown]
+    assert any("(100%)" in m for m in markdown_texts)
+

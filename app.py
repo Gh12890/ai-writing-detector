@@ -169,6 +169,15 @@ code, .mono {
     color: var(--accent-gray);
     background: var(--accent-gray-soft);
 }
+.da-badge.badge-elevated {
+    color: var(--accent-amber);
+    background: var(--accent-amber-soft);
+}
+.da-badge.badge-high {
+    color: var(--accent-red);
+    background: var(--accent-red-soft);
+    font-weight: 700;
+}
 .da-cta {
     display: inline-block;
     width: 100%;
@@ -380,6 +389,41 @@ def render_highlighted(document: str, flags, excluded_spans=()) -> str:
     return f'<div class="da-example">{"".join(pieces).replace(chr(10), "<br>")}</div>'
 
 
+def density_zone(rate: float) -> tuple[str, str]:
+    """
+    Coarse Low/Elevated/High label based on this project's own measured
+    corpus averages (human ~0.67/1000w, AI ~3.09/1000w -- see FINDINGS.md's
+    compare_corpora.py run). NOT a calibrated probability, NOT a claim
+    about authorship -- just where this document's flag rate sits
+    relative to a small, evolving reference corpus. Same boundary is
+    applied to both structural and lexical rates as an approximation;
+    the two tiers weren't measured separately at this resolution yet.
+    """
+    if rate <= 0.67:
+        return "Low", "gray"
+    elif rate < 3.09:
+        return "Elevated", "badge-elevated"
+    else:
+        return "High", "badge-high"
+
+
+HUMAN_ANCHOR_PER_1000W = 0.67
+AI_ANCHOR_PER_1000W = 3.09
+
+
+def density_percent(rate: float) -> int:
+    """
+    Expresses a document's flag rate as a percentage of the way from
+    this project's measured human corpus average to its measured AI
+    corpus average, clamped to 0-100. Rescaling of the same real,
+    already-measured density_zone anchors -- NOT a calibrated
+    probability of AI authorship.
+    """
+    span = AI_ANCHOR_PER_1000W - HUMAN_ANCHOR_PER_1000W
+    pct = (rate - HUMAN_ANCHOR_PER_1000W) / span * 100
+    return max(0, min(100, round(pct)))
+
+
 COLAB_URL = "https://colab.research.google.com/github/Gh12890/ai-writing-detector/blob/master/colab_demo.ipynb"
 
 
@@ -435,6 +479,25 @@ if run_clicked:
         col2.metric("Total flags", result.flag_count)
         col3.metric("Structural /1000w", result.structural_density_per_1000w)
         col4.metric("Lexical /1000w", result.lexical_density_per_1000w)
+
+        struct_label, struct_class = density_zone(result.structural_density_per_1000w)
+        lex_label, lex_class = density_zone(result.lexical_density_per_1000w)
+        struct_pct = density_percent(result.structural_density_per_1000w)
+        lex_pct = density_percent(result.lexical_density_per_1000w)
+        st.markdown(
+            f"""
+            <div style="display:flex; gap:12px; margin: 6px 0 18px 0;">
+                <span class="da-badge {struct_class}">Structural pattern density: {struct_label} ({struct_pct}%)</span>
+                <span class="da-badge {lex_class}">Lexical pattern density: {lex_label} ({lex_pct}%)</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.caption(
+            "These zones are relative to this project's own small, evolving corpus "
+            "(see FINDINGS.md) -- not a calibrated probability, and not a claim about "
+            "who or what wrote this text. Treat as a rough orientation, not a verdict."
+        )
 
         st.caption(
             "Structural (formatting/syntax patterns) and lexical (word/phrase "
