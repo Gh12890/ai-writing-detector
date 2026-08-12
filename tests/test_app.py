@@ -76,8 +76,8 @@ def test_structural_and_lexical_sections_both_render():
     at.run()
     assert not at.exception
     headers = [h.value for h in at.subheader]
-    assert any("Structural flags (3)" in h for h in headers)
-    assert any("Lexical flags (3)" in h for h in headers)
+    assert any("Formatting-pattern flags (3)" in h for h in headers)
+    assert any("Word-choice flags (3)" in h for h in headers)
 def test_density_zone_boundaries():
     from app import density_zone
 
@@ -100,8 +100,8 @@ def test_density_badges_render_low_for_plain_text():
     at.run()
     assert not at.exception
     markdown_texts = [m.value for m in at.markdown]
-    assert any("Structural pattern density: Low" in m for m in markdown_texts)
-    assert any("Lexical pattern density: Low" in m for m in markdown_texts)
+    assert any("Formatting patterns: Low" in m for m in markdown_texts)
+    assert any("Word choice patterns: Low" in m for m in markdown_texts)
 
 
 def test_density_badges_render_high_for_flag_heavy_text():
@@ -115,8 +115,8 @@ def test_density_badges_render_high_for_flag_heavy_text():
     at.run()
     assert not at.exception
     markdown_texts = [m.value for m in at.markdown]
-    assert any("Structural pattern density: High" in m for m in markdown_texts)
-    assert any("Lexical pattern density: High" in m for m in markdown_texts)
+    assert any("Formatting patterns: High" in m for m in markdown_texts)
+    assert any("Word choice patterns: High" in m for m in markdown_texts)
 def test_density_percent_boundaries():
     from app import density_percent
 

@@ -333,7 +333,7 @@ st.markdown(
         <h3>How to get started</h3>
         <div class="da-step"><div class="da-step-num">01</div><div class="da-step-text"><strong>Paste your text or upload a PDF</strong> below.</div></div>
         <div class="da-step"><div class="da-step-num">02</div><div class="da-step-text"><strong>Click Run analysis</strong> -- Layer 1 runs instantly, no setup needed.</div></div>
-        <div class="da-step"><div class="da-step-num">03</div><div class="da-step-text"><strong>Read the flagged spans</strong> -- structural and lexical flags are reported separately, since measurement showed they behave differently.</div></div>
+        <div class="da-step"><div class="da-step-num">03</div><div class="da-step-text"><strong>Read the flagged spans</strong> -- formatting patterns and word-choice patterns are reported separately, since measurement showed they behave differently.</div></div>
         <div class="da-step"><div class="da-step-num">04</div><div class="da-step-text"><strong>Go deeper, optionally</strong> -- open the Colab link above for the statistical scorer and the robustness check, free, on your own GPU.</div></div>
     </div>
     <hr class="da-divider">
@@ -477,8 +477,10 @@ if run_clicked:
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Word count", result.word_count)
         col2.metric("Total flags", result.flag_count)
-        col3.metric("Structural /1000w", result.structural_density_per_1000w)
-        col4.metric("Lexical /1000w", result.lexical_density_per_1000w)
+        col3.metric("Formatting patterns /1000w", result.structural_density_per_1000w)
+        col4.metric("Word choice patterns /1000w", result.lexical_density_per_1000w)
+
+
 
         struct_label, struct_class = density_zone(result.structural_density_per_1000w)
         lex_label, lex_class = density_zone(result.lexical_density_per_1000w)
@@ -487,9 +489,8 @@ if run_clicked:
         st.markdown(
             f"""
             <div style="display:flex; gap:12px; margin: 6px 0 18px 0;">
-                <span class="da-badge {struct_class}">Structural pattern density: {struct_label} ({struct_pct}%)</span>
-                <span class="da-badge {lex_class}">Lexical pattern density: {lex_label} ({lex_pct}%)</span>
-            </div>
+                <span class="da-badge {struct_class}">Formatting patterns: {struct_label} ({struct_pct}%)</span>
+                <span class="da-badge {lex_class}">Word choice patterns: {lex_label} ({lex_pct}%)</span>
             """,
             unsafe_allow_html=True,
         )
@@ -500,15 +501,15 @@ if run_clicked:
         )
 
         st.caption(
-            "Structural (formatting/syntax patterns) and lexical (word/phrase "
-            "lists) are reported separately, not blended into one score. "
-            "Real measurement (see FINDINGS.md) found lexical flag density "
-            "correlated strongly with formal writing register (r=0.722 with "
-            "sentence length) on confirmed human text -- structural rules "
-            "showed no such correlation across the same corpus. Treat "
-            "lexical flags as weaker, register-confounded signal, and "
-            "structural flags as the more reliable evidence, until further "
-            "measurement says otherwise."
+            "Formatting patterns (called 'structural' in this project's findings "
+            "docs) and word choice patterns (called 'lexical') are reported "
+            "separately, not blended into one score. Real measurement (see "
+            "FINDINGS.md) found word-choice flag density correlated strongly "
+            "with formal writing register (r=0.722 with sentence length) on "
+            "confirmed human text -- formatting rules showed no such "
+            "correlation across the same corpus. Treat word-choice flags as "
+            "weaker, register-confounded signal, and formatting flags as the "
+            "more reliable evidence, until further measurement says otherwise."
         )
         if result.suppressed_count:
             st.caption(f"{result.suppressed_count} flag(s) suppressed as legal boilerplate.")
@@ -520,7 +521,7 @@ if run_clicked:
         )
 
         by_tier = result.flags_by_tier()
-        st.subheader(f"Structural flags ({len(by_tier['structural'])})")
+        st.subheader(f"Formatting-pattern flags ({len(by_tier['structural'])})")
         if not by_tier["structural"]:
             st.write("None found.")
         else:
@@ -530,7 +531,7 @@ if run_clicked:
                     st.write(f"**Rule:** {flag.rule_name}")
                     st.write(f"**Why flagged:** {flag.explanation}")
 
-        st.subheader(f"Lexical flags ({len(by_tier['lexical'])})")
+        st.subheader(f"Word-choice flags ({len(by_tier['lexical'])})")
         if not by_tier["lexical"]:
             st.write("None found.")
         else:
