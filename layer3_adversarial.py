@@ -43,7 +43,8 @@ def generate_paraphrase(text: str, client, model: str = "claude-sonnet-5") -> st
         max_tokens=4096,
         messages=[{"role": "user", "content": PARAPHRASE_PROMPT.format(text=text)}],
     )
-    return response.content[0].text.strip()
+    text_blocks = [block.text for block in response.content if block.type == "text"]
+    return "".join(text_blocks).strip()
 
 
 def run_adversarial_test(text: str, client, observer=None, performer=None, tok=None, device=None) -> dict:
