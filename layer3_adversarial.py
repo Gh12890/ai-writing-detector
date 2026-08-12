@@ -16,7 +16,18 @@ HUMANIZER_FINDINGS.md for those manually-run numbers). This module
 measures robustness against a cheap, automatable attack, not the
 strongest attack possible. The two results are not equivalent and
 should never be reported as if they were.
+
+Chunking, and why it's necessary: a single-shot "paraphrase this whole
+document" prompt to a 1.5B model reliably collapses into summarization
+instead of paraphrase, regardless of max_new_tokens -- confirmed by
+direct measurement (word count ratio dropped to 0.18-0.25 on a
+1222-word document, even at max_new_tokens=2048). Splitting into
+~120-word sentence-aligned chunks and paraphrasing each independently
+restored length fidelity to 0.93-1.08 across every document tested.
+See LAYER3_FINDINGS.md for the full account.
 """
+
+import re
 
 from layer1 import PatternScorer
 
@@ -28,7 +39,13 @@ PARAPHRASE_PROMPT = (
 )
 
 
-def generate_paraphrase(text: str, performer, tok, device, max_new_tokens: int = 1024) -> str:
+def generate_paraphrase(text: str, performer, tok, device, max_new_tokens: int = 400) -> str:
+    """
+    Paraphrases a single, short (~chunk-sized) piece of text in one
+    generation call. NOT reliable on whole documents -- see module
+    docstring. Use chunked_paraphrase() for anything longer than a
+    couple of sentences.
+    """
     import torch
 
     messages = [{"role": "user", "content": PARAPHRASE_PROMPT.format(text=text)}]
@@ -49,16 +66,50 @@ def generate_paraphrase(text: str, performer, tok, device, max_new_tokens: int =
     return tok.decode(generated, skip_special_tokens=True).strip()
 
 
+def sentence_chunks(text: str, target_words: int = 120) -> list:
+    """Splits text into chunks of roughly target_words, breaking only at sentence boundaries."""
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    chunks = []
+    current = []
+    current_words = 0
+    for sent in sentences:
+        w = len(sent.split())
+        if current_words + w > target_words and current:
+            chunks.append(' '.join(current))
+            current = []
+            current_words = 0
+        current.append(sent)
+        current_words += w
+    if current:
+        chunks.append(' '.join(current))
+    return chunks
+
+
+def chunked_paraphrase(text: str, performer, tok, device, target_words: int = 120) -> str:
+    """
+    The actual attack: splits text into sentence-aligned chunks and
+    paraphrases each independently, then rejoins. Restores length
+    fidelity that whole-document generate_paraphrase() cannot achieve
+    -- see module docstring.
+    """
+    chunks = sentence_chunks(text, target_words)
+    paraphrased_chunks = [
+        generate_paraphrase(c, performer, tok, device, max_new_tokens=300)
+        for c in chunks
+    ]
+    return ' '.join(paraphrased_chunks)
+
+
 def run_adversarial_test(text: str, performer, tok, device, observer=None) -> dict:
     """
-    Runs Layer 1 on the original and on a generated paraphrase.
+    Runs Layer 1 on the original and on a chunked paraphrase.
     If `observer` is provided, also runs Layer 2 (Binoculars) on both.
     Reports the comparison; does not judge or modify anything.
     """
     from layer2_binoculars import binoculars_score
 
     original_result = PatternScorer().analyze(text)
-    paraphrase = generate_paraphrase(text, performer, tok, device)
+    paraphrase = chunked_paraphrase(text, performer, tok, device)
     paraphrase_result = PatternScorer().analyze(paraphrase)
 
     out = {
