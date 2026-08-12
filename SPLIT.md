@@ -16,3 +16,28 @@ AI: sample07.txt, sample12.txt
 - No rule threshold, exclusion filter, or scoring change may be made in response to a held-out test result. If that happens, the split is void and must be redone with a new seed.
 - sample05 (the Layer 2 outlier document responsible for ~80% of the apparent Layer 2 human/AI gap, see LAYER2_FINDINGS.md) fell into train/dev, not test — by chance, not selection. The held-out test set has not been checked against this known problem case. Any clean-looking held-out result should be read with that gap in mind.
 - All numbers in FINDINGS.md and LAYER2_FINDINGS.md predate this split and were computed without a held-out set. They stand as prior exploratory findings, not validated results, until re-verified against held_out_test.
+
+## Second Held-Out Pair: Claude API Attacker (2026-08-12)
+
+The original held-out pair (sample07, sample12) was used once, with the
+local Qwen2.5-1.5B attacker, per the rule above -- now spent for that
+purpose. Rather than reuse them for a second, different attacker
+(Claude API), a new held-out pair is designated specifically for it:
+
+Human: not applicable -- Layer 3 only tests AI-corpus documents.
+AI held-out (Claude API attacker only): sample09.txt, sample13.txt
+
+sample09 was previously used in the Quillbot humanizer test
+(HUMANIZER_FINDINGS.md) -- a different attacker, not the Claude API
+one, so its use there does not compromise this designation. sample13
+has not been used in any Layer 3 test before this.
+
+sample08, sample10, and sample11 -- already used to validate the
+Claude API attacker's methodology (confirming length fidelity, no
+chunking needed) -- are now also excluded from this held-out
+designation, for the same reason sample07/sample12 were excluded
+after the local-model test: they've already informed how the attacker
+was judged to be working.
+
+Same rule as before: these two files are used once, for a single final
+evaluation, no tuning in response to the result.
