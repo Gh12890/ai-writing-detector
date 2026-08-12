@@ -92,11 +92,11 @@ def _find_meta_summary(text: str) -> list[tuple[int, int, str]]:
 def _find_negative_parallelism(text: str) -> list[tuple[int, int, str]]:
     pattern = re.compile(
         r"[^.]*\bisn'?t\b[^.]*\.\s*It'?s\b[^.]*\."
-        r"|\bIt'?s not\b[^.]*[,.]\s*It'?s\b[^.]*\.",
+        r"|\bIt'?s not\b[^.]*[,.]\s*It'?s\b[^.]*\."
+        r"|\bnot\s+(merely|just|only|simply)\b[^.]*?,?\s*but\s+(also\s+)?[^.]*\.",
         re.I,
     )
     return [(m.start(), m.end(), m.group(0).strip()) for m in pattern.finditer(text)]
-
 
 def _find_parallel_bullets(text: str) -> list[tuple[int, int, str]]:
     bullet_pattern = re.compile(r"^\s*[\*\-]\s+.*\u2014.*$", re.M)

@@ -11,12 +11,12 @@ def test_app_loads_without_error():
     at.run()
     assert not at.exception
 
-def test_top_info_message_mentions_colab():
+def test_hero_mentions_colab():
     at = AppTest.from_file("../app.py")
     at.run()
     assert not at.exception
-    info_texts = [i.value for i in at.info]
-    assert any("Colab" in i for i in info_texts)
+    markdown_texts = [m.value for m in at.markdown]
+    assert any("Colab" in m for m in markdown_texts)
 
 def test_colab_box_renders_after_analysis():
     at = AppTest.from_file("../app.py")
@@ -26,7 +26,7 @@ def test_colab_box_renders_after_analysis():
     at.run()
     assert not at.exception
     markdown_texts = [m.value for m in at.markdown]
-    assert any("Open Layer 2 & 3 in Colab" in m for m in markdown_texts)
+    assert any("Open Layer 2 &amp; 3 in Colab" in m for m in markdown_texts)
 
 def test_run_analysis_shows_flags():
     at = AppTest.from_file("../app.py")
@@ -62,7 +62,8 @@ def test_empty_input_shows_warning():
     at.run()
     assert not at.exception
     warning_texts = [w.value for w in at.warning]
-    assert any("Paste some text first" in w for w in warning_texts)
+    assert any("Paste some text or upload a PDF first" in w for w in warning_texts)
+
 
 def test_structural_and_lexical_sections_both_render():
     at = AppTest.from_file("../app.py")
