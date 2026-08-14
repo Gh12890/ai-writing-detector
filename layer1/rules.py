@@ -84,10 +84,9 @@ def _find_repeated_transitions(text: str) -> list[tuple[int, int, str]]:
 
 def _find_meta_summary(text: str) -> list[tuple[int, int, str]]:
     pattern = re.compile(
-        r"\b(so the short answer is|in summary|to summarize|in conclusion)\b:?", re.I
+        r"\b(so the short answer is|in summary|to summarize|in conclusion|in short)\b:?", re.I
     )
     return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
-
 
 def _find_negative_parallelism(text: str) -> list[tuple[int, int, str]]:
     pattern = re.compile(
@@ -210,15 +209,25 @@ def _find_knowledge_cutoff_disclaimer(text: str) -> list[tuple[int, int, str]]:
 
 
 def _find_significance_inflation(text: str) -> list[tuple[int, int, str]]:
+    # 2026-08-13: broadened "played a X role in shaping" to also catch
+    # "important" (not just pivotal/crucial/significant) and a few more
+    # common summary-verbs (spreading/transforming/establishing/promoting),
+    # not just "shaping". Real caution: "played an important role in X" is
+    # also ordinary human phrasing on its own -- this widening has NOT
+    # been corpus-checked yet. Run compare_corpora.py against the real
+    # corpus before trusting this as scored; revert to the narrower
+    # version if it introduces human false positives. Also added "marked
+    # an important turning point" -- previously only "significant/
+    # pivotal/watershed moment" was caught.
     pattern = re.compile(
         r"\b(stands as a testament to|solidif(y|ies|ied) (its|his|her|their) (place|legacy)|"
         r"cements? (its|his|her|their) legacy|will (long )?be remembered as|"
-        r"marked a (significant|pivotal|watershed) moment|"
-        r"played a (pivotal|crucial|significant) role in shaping)\b",
+        r"marked an? (significant|pivotal|watershed|important) (moment|turning point)|"
+        r"played an? (pivotal|crucial|significant|important) role in "
+        r"(shaping|spreading|transforming|establishing|promoting))\b",
         re.I,
     )
     return [(m.start(), m.end(), m.group(0)) for m in pattern.finditer(text)]
-
 
 def _find_superficial_ing_analysis(text: str) -> list[tuple[int, int, str]]:
     pattern = re.compile(

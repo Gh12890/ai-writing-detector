@@ -606,3 +606,81 @@ subtler real version of it, is unknown -- would need more AI samples,
 
 deliberately varied in prompting style, to find out.
 
+
+
+
+
+\## Pattern found: formal/academic-register AI text underdetected (2026-08-13)
+
+Three separate real ChatGPT-generated texts tested live tonight (a
+
+biographical essay on Atatürk, a history of the ASDC autonomy movement,
+
+a history of Assam) each landed at or near zero total flags. Hand-traced
+
+every rule against all three -- confirmed this is not a bug in the usual
+
+sense: these texts genuinely contain almost none of the surface habits
+
+(bullets, bold, em dashes, promotional adjectives, AI-vocabulary words)
+
+most rules are built to catch. Each rule correctly returned zero on the
+
+patterns it's designed to find; the patterns just weren't present.
+
+
+
+The real finding is one level up: this rule set may systematically
+
+underdetect a specific AI writing style -- careful, restrained, formal/
+
+academic prose with low stylistic flourish -- even while working well
+
+on chattier, more typical AI output (as documented throughout
+
+FINDINGS.md). This wasn't visible until real formal-register AI text
+
+got tested directly tonight.
+
+
+
+Two narrow near-misses found and patched in this pass:
+
+\- significance\_inflation missed "played an important role in spreading"
+
+&#x20; (only "pivotal/crucial/significant... in shaping" was covered) and
+
+&#x20; "marked an important turning point" (only "significant/pivotal/
+
+&#x20; watershed moment" was covered). Broadened -- NOT yet corpus-checked,
+
+&#x20; see rules.py comment. Real risk: "played an important role in X" is
+
+&#x20; also ordinary human phrasing on its own.
+
+\- meta\_summary\_framing missed "In short" as a heading (only "in
+
+&#x20; summary/to summarize/in conclusion/so the short answer is" were
+
+&#x20; covered). Added -- lower false-positive risk than the above, but
+
+&#x20; still not independently corpus-checked yet.
+
+
+
+Not resolved by these two patches: the underlying pattern. Patching one
+
+phrase at a time as each new formal-register AI text gets tested has
+
+diminishing returns and doesn't scale. Real next step: deliberately
+
+build a small corpus of formal/academic-register AI text (not just
+
+whatever gets tested ad hoc) and measure this rule set's flag rate
+
+against it directly, the same way compare\_corpora.py already measures
+
+chattier AI text -- right now this gap is known qualitatively (three
+
+real examples) but not quantified.
+
