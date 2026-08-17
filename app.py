@@ -7,6 +7,22 @@ from layer1 import PatternScorer
 
 st.set_page_config(page_title="Draft Audit", layout="centered")
 
+# Google Analytics
+GA_MEASUREMENT_ID = "G-7HP14P92V2"
+
+st.markdown(
+    f"""
+    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){{dataLayer.push(arguments);}}
+        gtag('js', new Date());
+        gtag('config', '{GA_MEASUREMENT_ID}');
+    </script>
+    """,
+    unsafe_allow_html=True,
+)
+
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
